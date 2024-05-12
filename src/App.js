@@ -1,24 +1,18 @@
-import logo from './logo.svg';
 import './App.css';
+import backgroundImage from './images/bacground1.jpg';
 
 function App() {
   return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
-    </div>
+      <div className="cont" style={{backgroundImage: `url(${backgroundImage})`}}>
+        <h2 className="header">Подключение к комнате</h2>
+        <form className="form-connect">
+            <label className="inp-label">Ваш никнейм:</label>
+            <input type="text" className="inp-name"/>
+            <label className="inp-label">Название комнаты:</label>
+            <input type="text" className="inp-room"/>
+            <button className="form-btn">Присоединиться</button>
+        </form>
+      </div>
   );
 }
 
