@@ -9,7 +9,7 @@ function App() {
         <BrowserRouter>
           <Routes>
             <Route path='/' element={<JoinPage/>} />
-            <Route path='/room/:id' element={<RoomPage />}/>
+            <Route path='/room/:roomName' element={<RoomPage />}/>
           </Routes>
 
         </BrowserRouter>
