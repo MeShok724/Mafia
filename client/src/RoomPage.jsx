@@ -1,7 +1,10 @@
 import {useEffect, useRef, useState} from "react";
 import {useParams} from "react-router";
+import {useNavigate} from "react-router-dom";
 
 export default function RoomPage(){
+
+    const navigate = useNavigate();
 
     const roomName = useParams().roomName;
     const query = new URLSearchParams(window.location.search);
@@ -43,6 +46,9 @@ export default function RoomPage(){
                 case 'message':
                     console.log('Сообщение от ' + message.sender + ' : ', message.text);
                     break;
+                case 'disconnect':
+                    console.log(`Пользователь ${message.name} был отключен от комнаты`);
+                    break;
             }
         };
 
@@ -74,10 +80,22 @@ export default function RoomPage(){
         socket.current.send(JSON.stringify(message));
         console.log('Сообщение отправлено')
     }
+    function leaveRoom(){
+        let message = {
+            event: 'disconnect',
+            name: name,
+            roomName: roomName,
+        };
+        socket.current.send(JSON.stringify(message));
+        socket.current.close();
+        socket.current = null; // Обнуляем ссылку на WebSocket объект
+        navigate(`/`);
+    }
 
     return (
         <div>
             <button onClick={sendMessage}>Отправить сообщение</button>
+            <button onClick={leaveRoom}>Выйти из комнаты</button>
         </div>
     );
 }

@@ -19,19 +19,52 @@ function CreateRoom(name, user, userName){
         messages: [],
         addPlayer: function(ws, name) {
             this.players.push({name: name, room:this, ws: ws});
-        }
+        },
     }
     room.addPlayer(user, userName);
     rooms.push(room);
-    console.log('Создана комната '+ name);
+    console.log(`Создана комната ${name}`);
     return room;
+}
+function GetRoom(roomName){
+    for(let i = 0; i < rooms.length; i++){
+        if (rooms[i].name === roomName)
+            return rooms[i];
+    }
+    return false;
+}
+function GetPlayer (room, playerWs){
+    for(let i = 0; i < room.players.length; i++){
+        if (room.players[i].ws === playerWs)
+            return room.players[i];
+    }
+    return false;
+}
+function DeletePlayer (room, playerName){
+    for(let i = 0; i < room.players.length; i++){
+        if (room.players[i].name === playerName){
+            room.players.splice(i,1);
+            console.log(`Игрок с ником ${playerName} удален из комнаты ${room.name}`);
+            return true;
+        }
+    }
+    return false;
+}
+function DeleteRoom(roomName){
+    for(let i = 0; i < rooms.length; i++){
+        if (rooms[i].name === roomName){
+            rooms.splice(i,1);
+            console.log(`Комната ${roomName} удалена`);
+            return true;
+        }
+    }
+    return false;
 }
 
 wsServer.on('connection', function connection(ws){
     ws.on('message', (message) => {
         message = JSON.parse(message);
         console.log(message);
-        console.log('WS '+ ws);
         switch (message.event){
             case 'message':
                 let roomToBroadcast = rooms[0];
@@ -74,6 +107,44 @@ wsServer.on('connection', function connection(ws){
                 }
                 broadcastMessage(messageToSend, room);
                 break;
+            case 'disconnect':
+                let diskRoom = GetRoom(message.roomName);
+                if (diskRoom.players.length - 1 <= 0){
+                    DeleteRoom(message.roomName)
+                } else {
+                    DeletePlayer(diskRoom, message.name);
+                    let messageToSend = {
+                        event:'disconnect',
+                        name: message.name,
+                    }
+                    broadcastMessage(messageToSend, diskRoom);
+                    console.log('Сообщение об удалении пользователя отправлено')
+                }
+                ws.close;
+        }
+    })
+    ws.on('close', (code, reason) => {
+        console.log('Соединение закрыто', { code, reason });
+        // Удаляем пользователя из комнаты при разрыве соединения
+        for (let i = 0; i < rooms.length; i++) {
+            let room = rooms[i];
+            let playerToDelete = GetPlayer(room, ws);
+            if (!playerToDelete)
+                continue;
+            if (DeletePlayer(room, playerToDelete.name)) {
+                // Если комната опустела, удаляем комнату
+                if (room.players.length === 0) {
+                    DeleteRoom(room.name);
+                } else{
+                    let messageToSend = {
+                        event:'disconnect',
+                        name: playerToDelete.name,
+                    }
+                    broadcastMessage(messageToSend, room);
+                    console.log('Сообщение об удалении пользователя отправлено')
+                }
+                break;
+            }
         }
     })
 })
