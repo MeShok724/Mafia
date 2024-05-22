@@ -86,21 +86,16 @@ wsServer.on('connection', function connection(ws){
                     event:'response',
                     code: 'OK',
                     messages: currRoom.messages,
+                    players: currRoom.players.map(player => player.name),
                 }
+                console.log(`Игроку ${message.name} отправлены игроки: ${messageToSend.players}`)
                 ws.send(JSON.stringify(messageToSend));
 
                 messageToSend = {
                     event:'newPlayer',
                     name:message.name,
                 }
-                let room = rooms[0];
-                for(let i = 0; i<rooms.length;i++){
-                    if (rooms[i].name === message.roomName)
-                    {
-                        room = rooms[i];
-                        break;
-                    }
-                }
+                let room = GetRoom(message.roomName);
                 broadcastMessage(messageToSend, room);
                 break;
             case 'disconnect':
@@ -112,6 +107,7 @@ wsServer.on('connection', function connection(ws){
                     let messageToSend = {
                         event:'disconnect',
                         name: message.name,
+                        players: diskRoom.players.map(player => player.name),
                     }
                     broadcastMessage(messageToSend, diskRoom);
                     console.log('Сообщение об удалении пользователя отправлено')
@@ -135,6 +131,7 @@ wsServer.on('connection', function connection(ws){
                     let messageToSend = {
                         event:'disconnect',
                         name: playerToDelete.name,
+                        players: room.players.map(player => player.name),
                     }
                     broadcastMessage(messageToSend, room);
                     console.log('Сообщение об удалении пользователя отправлено')

@@ -1,0 +1,19 @@
+.cont-icons{
+    margin-top: 8vh;
+    margin-left: 5vh;
+    display: flex;
+}
+.icon{
+    margin-left: 5vh;
+    background-color: #1f1f1f;
+    color: white;
+    height: 21vh;
+    width: 15vh;
+    display: flex;
+    flex-direction: column;
+    text-align: center;
+}
+.icon-img{
+    height: 15vh;
+    width: 15vh;
+}

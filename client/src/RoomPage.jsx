@@ -2,7 +2,8 @@ import {useEffect, useRef, useState} from "react";
 import {useParams} from "react-router";
 import {useNavigate} from "react-router-dom";
 import backgroundImage from "./images/room1.jpg";
-import ChatComponent from './chat';
+import ChatComponent from './components/chat';
+import Icons from './components/icons'
 import './styles/RoomPage.css';
 
 export default function RoomPage(){
@@ -14,14 +15,13 @@ export default function RoomPage(){
     const name = query.get('name');
 
     const [messages, setMessages] = useState([]);
-    // const [messageToChat, setMessageToChat] = useState('');
-    const socket = useRef(null); // Инициализация useRef с типом WebSocket | null
+    const [players, setPlayers] = useState([]);
+    const socket = useRef(null);
 
-    const chatContainerRef = useRef(null);
+    const chatContainerRef = useRef(null);  // прокручивает чат вниз
 
 
     useEffect(() => {
-        // Создаем соединение WebSocket при монтировании компонента
         socket.current = new WebSocket('ws://localhost:5000');
 
         socket.current.onopen = () => {
@@ -39,22 +39,32 @@ export default function RoomPage(){
 
         socket.current.onmessage = (event) => {
             let message = JSON.parse(event.data);
-            console.log('Получено сообщение ' + message);
 
             switch (message.event) {
                 case 'response':
                     console.log('Вы подключены к комнате');
-                    setMessages(message.messages)
+                    setMessages(message.messages);
+                    setPlayers(message.players);
+                    console.log(`Обновлены игроки: ${players}`);
                     break;
                 case 'newPlayer':
                     console.log('Подключен пользователь ', message.name);
+                    if(message.name === name)
+                        break;
+                    setPlayers(prevPlayers => {
+                        const newPlayers = [...prevPlayers, message.name];
+                        console.log(`Обновлены игроки: ${newPlayers}`);
+                        return newPlayers;
+                    });
                     break;
                 case 'message':
                     console.log('Сообщение от ' + message.name + ' : ', message.text);
-                    setMessages(prev => [...prev, message])
+                    setMessages(prev => [...prev, message]);
                     break;
                 case 'disconnect':
                     console.log(`Пользователь ${message.name} был отключен от комнаты`);
+                    setPlayers(message.players);
+                    console.log(`Обновлены игроки: ${players}`);
                     break;
             }
         };
@@ -94,8 +104,16 @@ export default function RoomPage(){
         }
     }, [messages]);
 
+    function isPlayerReady(name){
+        return true;
+    }
+
     return (
         <div className='top-div' style={{backgroundImage: `url(${backgroundImage})`}}>
+            <Icons
+                players={players}
+                fPlayerReady={isPlayerReady}
+            />
             <ChatComponent
                 name={name}
                 roomName={roomName}
