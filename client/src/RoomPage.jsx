@@ -14,8 +14,8 @@ export default function RoomPage(){
 
     const [messages, setMessages] = useState([]);
     const [messageToChat, setMessageToChat] = useState('');
-    const [connected, setConnected] = useState(false);
-    const socket = useRef();
+    // const [connected, setConnected] = useState(false);
+    const socket = useRef(null); // Инициализация useRef с типом WebSocket | null
 
     const chatContainerRef = useRef(null);
 
@@ -25,7 +25,7 @@ export default function RoomPage(){
         socket.current = new WebSocket('ws://localhost:5000');
 
         socket.current.onopen = () => {
-            setConnected(true);
+            // setConnected(true);
             console.log('Подключение установлено');
             let message = {
                 event: 'connection',
