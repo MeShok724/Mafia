@@ -61,6 +61,10 @@ export default function RoomPage(){
                     console.log('Сообщение от ' + message.name + ' : ', message.text);
                     setMessages(prev => [...prev, message]);
                     break;
+                case 'messageFromServer':
+                    console.log('Сообщение от сервера: ', message.text);
+                    setMessages(prev => [...prev, message]);
+                    break;
                 case 'disconnect':
                     console.log(`Пользователь ${message.name} был отключен от комнаты`);
                     setPlayers(message.players);

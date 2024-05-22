@@ -64,7 +64,7 @@ function DeleteRoom(roomName){
 wsServer.on('connection', function connection(ws){
     ws.on('message', (message) => {
         message = JSON.parse(message);
-        console.log(message);
+        // console.log(message);
         switch (message.event){
             case 'message':
                 let roomToBroadcast = rooms[0];
@@ -72,23 +72,33 @@ wsServer.on('connection', function connection(ws){
                 roomToBroadcast.messages.push(message);
                 broadcastMessage(message, roomToBroadcast);
                 console.log(roomToBroadcast.messages);
-                console.log('Сообщение '+message);
+                // console.log('Сообщение '+message);
                 break;
             case 'connection':
                 console.log('Подключен игрок ' + message.name);
+
                 let currRoom = FindRoom(message.roomName);
                 if (currRoom === false)
                     currRoom = CreateRoom(message.roomName, ws, message.name)
                 else
                     currRoom.addPlayer(ws, message.name)
 
+                // Оповещение в чат
                 let messageToSend = {
+                    event:'messageFromServer',
+                    text:`Игрок ${message.name} присоединился к игре`
+                }
+                currRoom.messages.push(messageToSend);
+                broadcastMessage(messageToSend, currRoom);
+                console.log(`Сообщение от севера ${messageToSend}`)
+
+                messageToSend = {
                     event:'response',
                     code: 'OK',
                     messages: currRoom.messages,
                     players: currRoom.players.map(player => player.name),
                 }
-                console.log(`Игроку ${message.name} отправлены игроки: ${messageToSend.players}`)
+                // console.log(`Игроку ${message.name} отправлены игроки: ${messageToSend.players}`)
                 ws.send(JSON.stringify(messageToSend));
 
                 messageToSend = {
@@ -104,13 +114,20 @@ wsServer.on('connection', function connection(ws){
                     DeleteRoom(message.roomName)
                 } else {
                     DeletePlayer(diskRoom, message.name);
+
+                    // Оповещение в чат
                     let messageToSend = {
+                        event:'messageFromServer',
+                        text:`Игрок ${message.name} покинул игру`
+                    }
+                    diskRoom.messages.push(messageToSend);
+                    broadcastMessage(messageToSend, diskRoom);
+                    messageToSend = {
                         event:'disconnect',
                         name: message.name,
                         players: diskRoom.players.map(player => player.name),
                     }
                     broadcastMessage(messageToSend, diskRoom);
-                    console.log('Сообщение об удалении пользователя отправлено')
                 }
                 ws.close;
         }
@@ -128,7 +145,15 @@ wsServer.on('connection', function connection(ws){
                 if (room.players.length === 0) {
                     DeleteRoom(room.name);
                 } else{
+                    // Оповещение в чат
                     let messageToSend = {
+                        event:'messageFromServer',
+                        text:`Игрок ${playerToDelete.name} покинул игру`
+                    }
+                    room.messages.push(messageToSend);
+                    broadcastMessage(messageToSend, room);
+
+                    messageToSend = {
                         event:'disconnect',
                         name: playerToDelete.name,
                         players: room.players.map(player => player.name),

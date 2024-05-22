@@ -18,7 +18,7 @@ export default function ChatComponent({ name, roomName, socket, messages }) {
 
     const sendMessage = () => {
         if (socket.current && socket.current.readyState === WebSocket.OPEN) {
-            console.log('Отправляется сообщение');
+            // console.log('Отправляется сообщение');
             let message = {
                 event: 'message',
                 text: messageToChat,
@@ -27,7 +27,7 @@ export default function ChatComponent({ name, roomName, socket, messages }) {
             };
             socket.current.send(JSON.stringify(message));
             setMessageToChat(''); // Очистить состояние
-            console.log('Сообщение отправлено');
+            // console.log('Сообщение отправлено');
         } else {
             console.log('WebSocket соединение не установлено');
         }
@@ -36,7 +36,8 @@ export default function ChatComponent({ name, roomName, socket, messages }) {
     const printMessages = () => {
         return messages.map((message, index) => (
             <div key={index} className='message'>
-                <strong className='playerMessage'>{message.name}</strong>: {message.text}
+                {message.event === 'message'? <div><strong className='playerMessage'>{message.name}</strong>: {message.text}</div>:
+                    <div className='messageFromServer'>{message.text}</div>}
             </div>
         ));
     };
