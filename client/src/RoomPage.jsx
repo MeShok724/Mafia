@@ -2,6 +2,7 @@ import {useEffect, useRef, useState} from "react";
 import {useParams} from "react-router";
 import {useNavigate} from "react-router-dom";
 import backgroundImage from "./images/room1.jpg";
+import ChatComponent from './chat';
 import './styles/RoomPage.css';
 
 export default function RoomPage(){
@@ -13,8 +14,7 @@ export default function RoomPage(){
     const name = query.get('name');
 
     const [messages, setMessages] = useState([]);
-    const [messageToChat, setMessageToChat] = useState('');
-    // const [connected, setConnected] = useState(false);
+    // const [messageToChat, setMessageToChat] = useState('');
     const socket = useRef(null); // Инициализация useRef с типом WebSocket | null
 
     const chatContainerRef = useRef(null);
@@ -75,19 +75,6 @@ export default function RoomPage(){
         };
     }, []);
 
-
-    function sendMessage(){
-        console.log('Отправляется сообщение')
-        let message = {
-            event: 'message',
-            text: messageToChat,
-            name: name,
-            roomName: roomName,
-        }
-        socket.current.send(JSON.stringify(message));
-        setMessageToChat('');
-        console.log('Сообщение отправлено');
-    }
     function leaveRoom(){
         let message = {
             event: 'disconnect',
@@ -107,30 +94,15 @@ export default function RoomPage(){
         }
     }, [messages]);
 
-    const handleMessageChange = (event) => {
-        setMessageToChat(event.target.value)
-    }
-
     return (
         <div className='top-div' style={{backgroundImage: `url(${backgroundImage})`}}>
-            <div className='cont-chat'>
-                <div className='chat-messages' ref={chatContainerRef}>
-                    {printMessages()}
-                </div>
-                <div className='chat-send'>
-                    <input type='text' className='inp-chat' value={messageToChat} onChange={handleMessageChange}/>
-                    <button onClick={sendMessage} className='btn-chat'>Отправить сообщение</button>
-                </div>
-            </div>
+            <ChatComponent
+                name={name}
+                roomName={roomName}
+                socket={socket}
+                messages={messages}
+            />
             <button onClick={leaveRoom} className='btn-leave'>Выйти из комнаты</button>
         </div>
     );
-
-    function printMessages(){
-        return messages.map((message, index) => (
-            <div key={index} className='message'>
-                <strong className='playerMessage'>{message.name}</strong>: {message.text}
-            </div>
-        ))
-    }
 }
