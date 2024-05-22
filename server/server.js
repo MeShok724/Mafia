@@ -68,14 +68,10 @@ wsServer.on('connection', function connection(ws){
         switch (message.event){
             case 'message':
                 let roomToBroadcast = rooms[0];
-                for(let i = 0; i<rooms.length;i++){
-                    if (rooms[i].name === message.roomName)
-                    {
-                        roomToBroadcast = rooms[i];
-                        break;
-                    }
-                }
+                roomToBroadcast = GetRoom(message.roomName);
+                roomToBroadcast.messages.push(message);
                 broadcastMessage(message, roomToBroadcast);
+                console.log(roomToBroadcast.messages);
                 console.log('Сообщение '+message);
                 break;
             case 'connection':

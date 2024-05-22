@@ -1,0 +1,42 @@
+*{
+    margin: 0;
+    padding: 0;
+}
+.top-div {
+    height: 100vh;
+    background-size: cover;
+    background-position: center;
+    display: flex;
+    flex-direction: column;
+}
+.message{
+    color:white;
+}
+.cont-chat{
+    background-color: #1f1f1f;
+    margin-top: 35vh;
+    margin-left: auto;
+    height: 50vh;
+    width: 40vh;
+    display: flex;
+    flex-direction: column;
+}
+.chat-messages{
+    height: 85%;
+    overflow-y: scroll;
+}
+.chat-send{
+    height: 10vh;
+    margin-top: auto;
+    display: flex;
+    flex-direction: column;
+}
+.btn-leave{
+    margin-top: 8vh;
+    width: 20vh;
+    margin-left: auto;
+    margin-right: 10vh;
+}
+.playerMessage{
+    color:green;
+}

@@ -1,6 +1,8 @@
 import {useEffect, useRef, useState} from "react";
 import {useParams} from "react-router";
 import {useNavigate} from "react-router-dom";
+import backgroundImage from "./images/room1.jpg";
+import './styles/RoomPage.css';
 
 export default function RoomPage(){
 
@@ -11,8 +13,11 @@ export default function RoomPage(){
     const name = query.get('name');
 
     const [messages, setMessages] = useState([]);
+    const [messageToChat, setMessageToChat] = useState('');
     const [connected, setConnected] = useState(false);
     const socket = useRef();
+
+    const chatContainerRef = useRef(null);
 
 
     useEffect(() => {
@@ -39,12 +44,14 @@ export default function RoomPage(){
             switch (message.event) {
                 case 'response':
                     console.log('Вы подключены к комнате');
+                    setMessages(message.messages)
                     break;
                 case 'newPlayer':
                     console.log('Подключен пользователь ', message.name);
                     break;
                 case 'message':
-                    console.log('Сообщение от ' + message.sender + ' : ', message.text);
+                    console.log('Сообщение от ' + message.name + ' : ', message.text);
+                    setMessages(prev => [...prev, message])
                     break;
                 case 'disconnect':
                     console.log(`Пользователь ${message.name} был отключен от комнаты`);
@@ -69,16 +76,17 @@ export default function RoomPage(){
     }, []);
 
 
-
     function sendMessage(){
         console.log('Отправляется сообщение')
         let message = {
             event: 'message',
-            text: 'text',
+            text: messageToChat,
+            name: name,
             roomName: roomName,
         }
         socket.current.send(JSON.stringify(message));
-        console.log('Сообщение отправлено')
+        setMessageToChat('');
+        console.log('Сообщение отправлено');
     }
     function leaveRoom(){
         let message = {
@@ -92,10 +100,37 @@ export default function RoomPage(){
         navigate(`/`);
     }
 
+    useEffect(() => {
+        // Прокручиваем контейнер чата к нижней границе при добавлении нового сообщения
+        if (chatContainerRef.current) {
+            chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight;
+        }
+    }, [messages]);
+
+    const handleMessageChange = (event) => {
+        setMessageToChat(event.target.value)
+    }
+
     return (
-        <div>
-            <button onClick={sendMessage}>Отправить сообщение</button>
-            <button onClick={leaveRoom}>Выйти из комнаты</button>
+        <div className='top-div' style={{backgroundImage: `url(${backgroundImage})`}}>
+            <div className='cont-chat'>
+                <div className='chat-messages' ref={chatContainerRef}>
+                    {printMessages()}
+                </div>
+                <div className='chat-send'>
+                    <input type='text' className='inp-chat' value={messageToChat} onChange={handleMessageChange}/>
+                    <button onClick={sendMessage} className='btn-chat'>Отправить сообщение</button>
+                </div>
+            </div>
+            <button onClick={leaveRoom} className='btn-leave'>Выйти из комнаты</button>
         </div>
     );
+
+    function printMessages(){
+        return messages.map((message, index) => (
+            <div key={index} className='message'>
+                <strong className='playerMessage'>{message.name}</strong>: {message.text}
+            </div>
+        ))
+    }
 }
