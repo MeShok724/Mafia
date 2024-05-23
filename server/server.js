@@ -97,10 +97,14 @@ function checkPlayersCount(room){
             phase: 'playersWaiting'
         }
         broadcastMessage(message, room);
+        room.readyPlayers = [];
         console.log('Отправлена фаза ожидания игроков');
         return true;
     }
     return false;
+}
+function checkAllReady(room){
+    return room.players.length === room.readyPlayers.length;
 }
 
 wsServer.on('connection', function connection(ws){
@@ -158,7 +162,7 @@ wsServer.on('connection', function connection(ws){
                 let room = GetRoom(message.roomName);
                 broadcastMessage(messageToSend, room);
 
-                // переход в фазу подготовке при нужном кол-ве игроков
+                // переход в фазу подготовки при нужном кол-ве игроков
                 checkPlayersCount(room);
                 break;
             case 'disconnect':  // отключение игрока
@@ -196,6 +200,22 @@ wsServer.on('connection', function connection(ws){
                     }
                     broadcastMessage(messageToSend, room);
                     console.log(`Игрок ${message.name} готов`)
+                    // если все игроки готовы, начало игры
+                    if (checkAllReady(room)){
+                        let messageToSend = {
+                            event:'phase',
+                            phase: 'startDay',
+                        }
+                        broadcastMessage(messageToSend, room);
+                        // Оповещение в чат
+                        messageToSend = {
+                            event:'messageFromServer',
+                            text:`Игра началась!`
+                        }
+                        room.messages.push(messageToSend);
+                        broadcastMessage(messageToSend, room);
+                        console.log(`Все готовы, можно начинать`);
+                    }
                 } else if (message.code === 'notReady'){
                     let room = GetRoom(message.roomName);
                     let index = room.readyPlayers.indexOf(message.name);
