@@ -12,7 +12,10 @@
 .cont-interface{
     display: flex;
 }
-
+.menu-buttons{
+    display: flex;
+    flex-direction: column;
+}
 .btn-leave{
     width: 20vh;
     height: fit-content;
@@ -22,6 +25,27 @@
     color: white;
     border-style: none;
     border-radius: 7px;
+    margin-left: 20vh;
+}
+.btn-ready{
+    width: 20vh;
     margin-left: auto;
-    margin-right: 10vh;
+    height: fit-content;
+    padding: 1vh;
+    margin-top: 3vh;
+    border-radius: 7px;
+    border-style: none;
+    background-color: green;
+    color: white;
+}
+.btn-not-ready{
+    width: 20vh;
+    margin-left: auto;
+    height: fit-content;
+    padding: 1vh;
+    margin-top: 3vh;
+    border-radius: 7px;
+    border-style: none;
+    background-color: #2d2b2d;
+    color: white;
 }

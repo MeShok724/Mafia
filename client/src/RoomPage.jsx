@@ -66,6 +66,7 @@ export default function RoomPage(){
                     setMessages(prev => [...prev, message]);
                     break;
                 case 'phase':
+                    setReadyPlayers([]);
                     setPhase(message.phase);
                     console.log(`Фаза игры перешла в ${message.phase}`);
                     break;
@@ -73,6 +74,17 @@ export default function RoomPage(){
                     console.log(`Пользователь ${message.name} был отключен от комнаты`);
                     setPlayers(message.players);
                     break;
+                case 'ready':
+                    if (message.code === 'ready'){
+                        setReadyPlayers(prev => [...prev, message.name]);
+                        console.log(`Игрок ${message.name} готов`)
+                    } else if (message.code === 'notReady'){
+                        setReadyPlayers(prev => {
+                            // Фильтрация массива, чтобы удалить указанное имя
+                            return prev.filter(playerName => playerName !== message.name);
+                        });
+                        console.log(`Игрок ${message.name} отменил готовность`)
+                    }
             }
         };
 
@@ -112,9 +124,37 @@ export default function RoomPage(){
     }, [messages]);
 
     function isPlayerReady(name){
-        return true;
+        if (readyPlayers.indexOf(name) !== -1)
+            return true;
+        return false;
     }
+    function handleBtnReady(){
+        let message = {
+            event: 'ready',
+            name: name,
+            roomName: roomName,
+            code: 'ready',
+        }
+        socket.current.send(JSON.stringify(message));
+    }
+    function handleBtnNotReady(){
+        let message = {
+            event: 'ready',
+            name: name,
+            roomName: roomName,
+            code: 'notReady',
+        }
+        socket.current.send(JSON.stringify(message));
+    }
+    function btnReadyView(){
+        if (phase !== 'preparing')
+            return (<div></div>)
+        if (readyPlayers.indexOf(name) === -1)
+            return (<button onClick={handleBtnReady} className='btn-ready'>Готов</button>);
+        else
+            return (<button onClick={handleBtnNotReady} className='btn-not-ready'>Отмена</button>)
 
+    }
     return (
         <div className='top-div' style={{backgroundImage: `url(${backgroundImage})`}}>
             <Icons
@@ -128,8 +168,10 @@ export default function RoomPage(){
                     socket={socket}
                     messages={messages}
                 />
-                <button onClick={leaveRoom} className='btn-leave'>Выйти из комнаты</button>
-                {phase === 'preparing'? <button className='btnReady'>Готов</button>:<div></div>}
+                <div className='menu-buttons'>
+                    <button onClick={leaveRoom} className='btn-leave'>Выйти из комнаты</button>
+                    {btnReadyView()}
+                </div>
             </div>
         </div>
     );

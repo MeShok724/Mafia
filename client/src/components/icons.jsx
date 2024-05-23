@@ -8,8 +8,9 @@ export default function Icons(props){
                 <img  src={imageIcon} className='icon-img' alt={name}/>
                 <strong className='icon-name'>{name}</strong>
                 {props.fPlayerReady(name)?
-                    <label className='icon-not-ready'>Не готов</label>:
-                    <label className='icon-ready'>Готов</label>}
+                    <label className='icon-ready'>Готов</label>:
+                    <label className='icon-not-ready'>Не готов</label>
+                    }
             </div>
         ));
     };

@@ -5,7 +5,7 @@ const wsServer = new ws.Server({
 
 let rooms = [];
 const minPlayers = 4;
-const maxPlayers = 16;
+const maxPlayers = 20;
 
 function FindRoom(name){
     for(let i = 0; i < rooms.length; i++){
@@ -19,6 +19,7 @@ function CreateRoom(name, user, userName){
         name: name,
         players: [],
         messages: [],
+        readyPlayers: [],
         phase: 'playersWaiting',
         addPlayer: function(ws, name) {
             this.players.push({name: name, room:this, ws: ws, ready: false});
@@ -183,6 +184,30 @@ wsServer.on('connection', function connection(ws){
                     checkPlayersCount(diskRoom);
                 }
                 ws.close;
+                break;
+            case 'ready':   // игрок прислал сообщение о готовности
+                if (message.code === 'ready'){
+                    let room = GetRoom(message.roomName);
+                    room.readyPlayers.push(message.name);
+                    let messageToSend = {
+                        event:'ready',
+                        code: 'ready',
+                        name: message.name,
+                    }
+                    broadcastMessage(messageToSend, room);
+                    console.log(`Игрок ${message.name} готов`)
+                } else if (message.code === 'notReady'){
+                    let room = GetRoom(message.roomName);
+                    let index = room.readyPlayers.indexOf(message.name);
+                    room.readyPlayers.splice(index, 1);
+                    let messageToSend = {
+                        event:'ready',
+                        code: 'notReady',
+                        name: message.name,
+                    }
+                    broadcastMessage(messageToSend, room);
+                    console.log(`Игрок ${message.name} отменил готовность`)
+                }
                 break;
         }
     })
