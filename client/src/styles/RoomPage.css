@@ -9,34 +9,19 @@
     display: flex;
     flex-direction: column;
 }
-.message{
-    color:white;
-}
-.cont-chat{
-    background-color: #1f1f1f;
-    margin-top: 10vh;
-    margin-left: auto;
-    height: 50vh;
-    width: 40vh;
+.cont-interface{
     display: flex;
-    flex-direction: column;
 }
-.chat-messages{
-    height: 85%;
-    overflow-y: scroll;
-}
-.chat-send{
-    height: 10vh;
-    margin-top: auto;
-    display: flex;
-    flex-direction: column;
-}
+
 .btn-leave{
-    margin-top: 8vh;
     width: 20vh;
+    height: fit-content;
+    padding: 1vh;
+    margin-top: 3vh;
+    background-color: red;
+    color: white;
+    border-style: none;
+    border-radius: 7px;
     margin-left: auto;
     margin-right: 10vh;
-}
-.playerMessage{
-    color:green;
 }

@@ -1,0 +1,35 @@
+.cont-chat{
+    background-color: #1f1f1f;
+    margin-left: 30%;
+    width: 80vh;
+    display: flex;
+    flex-direction: column;
+    padding: 1vh;
+    margin-top: 3vh;
+}
+.chat-messages{
+    height: 37vh;
+    overflow-y: scroll;
+}
+.chat-send{
+    margin-top: 1vh;
+    margin-right: 3vh;
+    height: 3vh;
+    display: flex;
+    justify-content: space-between;
+}
+.inp-chat{
+    margin: 0;
+    padding-left: 1vh;
+    width: 60%;
+}
+.btn-chat{
+    margin: 0;
+    width: 30%;
+}
+.playerMessage{
+    color:green;
+}
+.message{
+    color:white;
+}

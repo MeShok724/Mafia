@@ -4,6 +4,8 @@ const wsServer = new ws.Server({
 }, ()=>console.log('Server started on port 5000'));
 
 let rooms = [];
+const minPlayers = 4;
+const maxPlayers = 16;
 
 function FindRoom(name){
     for(let i = 0; i < rooms.length; i++){
@@ -17,8 +19,9 @@ function CreateRoom(name, user, userName){
         name: name,
         players: [],
         messages: [],
+        phase: 'playersWaiting',
         addPlayer: function(ws, name) {
-            this.players.push({name: name, room:this, ws: ws});
+            this.players.push({name: name, room:this, ws: ws, ready: false});
         },
     }
     room.addPlayer(user, userName);
@@ -72,6 +75,33 @@ function checkNameCollision(playerName, room){
     });
 }
 
+// проверка нужного количества участников для перехода в фазу подготовки
+// , отправка сообщений о фазе подготовки игрокам
+// , изменения текущей фазы в комнате
+function checkPlayersCount(room){
+    if (room.phase === 'playersWaiting' && room.players.length >= minPlayers && room.players.length<=maxPlayers){
+        room.phase = 'preparing';
+        let message = {
+            event: 'phase',
+            phase: 'preparing'
+        }
+        broadcastMessage(message, room);
+        console.log('Отправлена фаза подготовки');
+        return true;
+    }
+    if (room.phase === 'preparing' && (room.players.length < minPlayers || room.players.length > maxPlayers)){
+        room.phase = 'playersWaiting';
+        let message = {
+            event: 'phase',
+            phase: 'playersWaiting'
+        }
+        broadcastMessage(message, room);
+        console.log('Отправлена фаза ожидания игроков');
+        return true;
+    }
+    return false;
+}
+
 wsServer.on('connection', function connection(ws){
     ws.on('message', (message) => {
         message = JSON.parse(message);
@@ -85,19 +115,16 @@ wsServer.on('connection', function connection(ws){
                 console.log(roomToBroadcast.messages);
                 // console.log('Сообщение '+message);
                 break;
-            case 'connection':
+            case 'connection':  // подключение игрока и добавление в комнату
                 console.log('Подключен игрок ' + message.name);
-
                 let currRoom = FindRoom(message.roomName);
                 if (checkNameCollision(message.name, currRoom)){
                     let messageToSend = {
                         event:'response',
                         code: 'nameCollision',
                     }
-                    // console.log(`Игроку ${message.name} отправлены игроки: ${messageToSend.players}`)
                     ws.send(JSON.stringify(messageToSend));
                     ws.close;
-                    console.log('Сообщение о коллизии отправлено');
                     break;
                 }
                 if (currRoom === false)
@@ -112,25 +139,28 @@ wsServer.on('connection', function connection(ws){
                 }
                 currRoom.messages.push(messageToSend);
                 broadcastMessage(messageToSend, currRoom);
-                // console.log(`Сообщение от севера ${messageToSend}`)
 
+                // ответ подключившемуся игроку
                 messageToSend = {
                     event:'response',
                     code: 'OK',
                     messages: currRoom.messages,
                     players: currRoom.players.map(player => player.name),
                 }
-                // console.log(`Игроку ${message.name} отправлены игроки: ${messageToSend.players}`)
                 ws.send(JSON.stringify(messageToSend));
 
+                // сообщение всем игрокам
                 messageToSend = {
                     event:'newPlayer',
                     name:message.name,
                 }
                 let room = GetRoom(message.roomName);
                 broadcastMessage(messageToSend, room);
+
+                // переход в фазу подготовке при нужном кол-ве игроков
+                checkPlayersCount(room);
                 break;
-            case 'disconnect':
+            case 'disconnect':  // отключение игрока
                 let diskRoom = GetRoom(message.roomName);
                 if (diskRoom.players.length - 1 <= 0){
                     DeleteRoom(message.roomName)
@@ -150,8 +180,10 @@ wsServer.on('connection', function connection(ws){
                         players: diskRoom.players.map(player => player.name),
                     }
                     broadcastMessage(messageToSend, diskRoom);
+                    checkPlayersCount(diskRoom);
                 }
                 ws.close;
+                break;
         }
     })
     ws.on('close', (code, reason) => {
@@ -182,6 +214,7 @@ wsServer.on('connection', function connection(ws){
                     }
                     broadcastMessage(messageToSend, room);
                     console.log('Сообщение об удалении пользователя отправлено')
+                    checkPlayersCount(room);
                 }
                 break;
             }

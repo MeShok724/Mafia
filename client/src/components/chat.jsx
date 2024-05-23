@@ -1,4 +1,6 @@
 import React, { useRef, useState, useEffect } from "react";
+import '../styles/chat.css'
+
 
 export default function ChatComponent({ name, roomName, socket, messages }) {
     // const [messages, setMessages] = useState([]);
