@@ -42,6 +42,11 @@ export default function RoomPage(){
 
             switch (message.event) {
                 case 'response':
+                    if (message.code === 'nameCollision'){
+                        alert('Ваш ник уже используется другим игроком в этой комнате, используйте другой ник.');
+                        navigate(`/`);
+                        break;
+                    }
                     console.log('Вы подключены к комнате');
                     setMessages(message.messages);
                     setPlayers(message.players);

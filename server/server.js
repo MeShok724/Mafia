@@ -60,6 +60,17 @@ function DeleteRoom(roomName){
     }
     return false;
 }
+function checkNameCollision(playerName, room){
+    if (room.players === undefined)
+        return false;
+    return room.players.some((currPlayer) => {
+        // console.log(`Сравнение ников ${currPlayer.name} и ${playerName}`);
+        if (currPlayer.name === playerName) {
+            // console.log('Возвращается true');
+            return true;
+        }
+    });
+}
 
 wsServer.on('connection', function connection(ws){
     ws.on('message', (message) => {
@@ -78,6 +89,17 @@ wsServer.on('connection', function connection(ws){
                 console.log('Подключен игрок ' + message.name);
 
                 let currRoom = FindRoom(message.roomName);
+                if (checkNameCollision(message.name, currRoom)){
+                    let messageToSend = {
+                        event:'response',
+                        code: 'nameCollision',
+                    }
+                    // console.log(`Игроку ${message.name} отправлены игроки: ${messageToSend.players}`)
+                    ws.send(JSON.stringify(messageToSend));
+                    ws.close;
+                    console.log('Сообщение о коллизии отправлено');
+                    break;
+                }
                 if (currRoom === false)
                     currRoom = CreateRoom(message.roomName, ws, message.name)
                 else
@@ -90,7 +112,7 @@ wsServer.on('connection', function connection(ws){
                 }
                 currRoom.messages.push(messageToSend);
                 broadcastMessage(messageToSend, currRoom);
-                console.log(`Сообщение от севера ${messageToSend}`)
+                // console.log(`Сообщение от севера ${messageToSend}`)
 
                 messageToSend = {
                     event:'response',
@@ -171,5 +193,5 @@ function broadcastMessage(message, room){
     room.players.forEach(player => {
         player.ws.send(JSON.stringify(message));
     })
-    console.log(room);
+    // console.log(room);
 }
