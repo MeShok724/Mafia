@@ -19,6 +19,7 @@ export default function RoomPage(){
     const [readyPlayers, setReadyPlayers] = useState([]);   // готовые игроки
     const socket = useRef(null);
     const [phase, setPhase] = useState('playersWaiting'); // текущая фаза игры
+    const [role, setRole] = useState('');   // роль
 
     // для прокручивания чат вниз
     const chatContainerRef = useRef(null);
@@ -85,6 +86,10 @@ export default function RoomPage(){
                         });
                         console.log(`Игрок ${message.name} отменил готовность`)
                     }
+                    break;
+                case 'role':
+                    setRole(message.role);
+                    break;
             }
         };
 
@@ -155,6 +160,22 @@ export default function RoomPage(){
             return (<button onClick={handleBtnNotReady} className='btn-not-ready'>Отмена</button>)
 
     }
+    function roleView(){
+        switch (role){
+            case '':
+                return (<div></div>);
+            case 'mafia':
+                return (<strong className='role'>Ваша роль: Мафия</strong>);
+            case 'citizen':
+                return (<strong className='role'>Ваша роль: Мирный житель</strong>);
+            case 'sherif':
+                return (<strong className='role'>Ваша роль: Шериф</strong>)
+            case 'wanton':
+                return (<strong className='role'>Ваша роль: Распутница</strong>)
+            case 'doctor':
+                return (<strong className='role'>Ваша роль: Доктор</strong>)
+        }
+    }
     return (
         <div className='top-div' style={{backgroundImage: `url(${backgroundImage})`}}>
             <Icons
@@ -162,6 +183,9 @@ export default function RoomPage(){
                 fPlayerReady={isPlayerReady}
             />
             <div className='cont-interface'>
+                <div className='leftPanel'>
+                    {roleView()}
+                </div>
                 <ChatComponent
                     name={name}
                     roomName={roomName}
