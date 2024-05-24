@@ -1,6 +1,6 @@
 .cont-chat{
     background-color: #1f1f1f;
-    margin-left: 30%;
+    /*margin-left: 30%;*/
     width: 80vh;
     display: flex;
     flex-direction: column;
@@ -22,10 +22,20 @@
     margin: 0;
     padding-left: 1vh;
     width: 60%;
+    background-color: #131313;
+    color: white;
 }
 .btn-chat{
     margin: 0;
     width: 30%;
+    background-color: #131313;
+    color: white;
+    border-width: 0;
+    border-radius: 7px;
+    transition: border 0.1s ease-in-out;
+}
+.btn-chat:active {
+    border: 2px solid white;
 }
 .playerMessage{
     color:green;

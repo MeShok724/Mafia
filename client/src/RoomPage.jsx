@@ -4,6 +4,11 @@ import {useNavigate} from "react-router-dom";
 import backgroundImage from "./images/room1.jpg";
 import ChatComponent from './components/chat';
 import Icons from './components/icons'
+import imgMafia from "./images/mafia.jpg";
+import imgCitizen from "./images/sitizen.jpg";
+import imgSherif from "./images/sherif.jpg";
+import imgWanton from "./images/wanton.jpg";
+import imgDoctor from "./images/doctor.jpg";
 import './styles/RoomPage.css';
 
 export default function RoomPage(){
@@ -51,6 +56,9 @@ export default function RoomPage(){
                     console.log('Вы подключены к комнате');
                     setMessages(message.messages);
                     setPlayers(message.players);
+                    setPhase(message.phase);
+                    if (message.phase === 'preparing' && message.readyPlayers !== undefined)
+                        setReadyPlayers(message.readyPlayers);
                     break;
                 case 'newPlayer':
                     console.log('Подключен пользователь ', message.name);
@@ -176,6 +184,22 @@ export default function RoomPage(){
                 return (<strong className='role'>Ваша роль: Доктор</strong>)
         }
     }
+    function rolePicture(){
+        switch (role){
+            case '':
+                return (<div></div>);
+            case 'mafia':
+                return (<img src={imgMafia} className='role-img' alt='mafia'/>);
+            case 'citizen':
+                return (<img src={imgCitizen} className='role-img' alt='citizen'/>);
+            case 'sherif':
+                return ((<img src={imgSherif} className='role-img' alt='sherif'/>))
+            case 'wanton':
+                return ((<img src={imgWanton} className='role-img' alt='wanton'/>))
+            case 'doctor':
+                return ((<img src={imgDoctor} className='role-img' alt='doctor'/>))
+        }
+    }
     return (
         <div className='top-div' style={{backgroundImage: `url(${backgroundImage})`}}>
             <Icons
@@ -183,8 +207,9 @@ export default function RoomPage(){
                 fPlayerReady={isPlayerReady}
             />
             <div className='cont-interface'>
-                <div className='leftPanel'>
+                <div className='left-panel'>
                     {roleView()}
+                    {rolePicture()}
                 </div>
                 <ChatComponent
                     name={name}

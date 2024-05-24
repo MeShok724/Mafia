@@ -87,6 +87,7 @@ function checkPlayersCount(room){
             phase: 'preparing'
         }
         broadcastMessage(message, room);
+        room.phase = 'preparing';
         console.log('Отправлена фаза подготовки');
         return true;
     }
@@ -97,6 +98,7 @@ function checkPlayersCount(room){
             phase: 'playersWaiting'
         }
         broadcastMessage(message, room);
+        room.phase = 'playersWaiting';
         room.readyPlayers = [];
         console.log('Отправлена фаза ожидания игроков');
         return true;
@@ -172,9 +174,12 @@ function playerConnectionHandler(message, ws){
     messageToSend = {
         event:'response',
         code: 'OK',
+        phase: currRoom.phase,
         messages: currRoom.messages,
         players: currRoom.players.map(player => player.name),
     }
+    if (currRoom.phase === 'preparing')
+        messageToSend.readyPlayers = currRoom.readyPlayers;
     ws.send(JSON.stringify(messageToSend));
 
     // сообщение всем игрокам

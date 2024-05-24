@@ -12,6 +12,18 @@
 .cont-interface{
     display: flex;
 }
+.left-panel{
+    margin-top: 4vh;
+    width: 35%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    color: white;
+}
+.role-img{
+    margin-top: 4vh;
+    width: 20vh;
+}
 .menu-buttons{
     display: flex;
     flex-direction: column;
