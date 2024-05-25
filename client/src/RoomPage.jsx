@@ -25,6 +25,8 @@ export default function RoomPage(){
     const socket = useRef(null);
     const [phase, setPhase] = useState('playersWaiting'); // текущая фаза игры
     const [role, setRole] = useState('');   // роль
+    const [timeToView, setTimeToView] = useState('');
+    let timerInterval; // таймер
 
     // для прокручивания чат вниз
     const chatContainerRef = useRef(null);
@@ -98,6 +100,11 @@ export default function RoomPage(){
                 case 'role':
                     setRole(message.role);
                     break;
+                case 'startTimer':
+                    startTimer(message.endTime);
+                    break;
+                case 'timeEnded':
+                    // ненужный код
             }
         };
 
@@ -137,10 +144,29 @@ export default function RoomPage(){
     }, [messages]);
 
     function isPlayerReady(name){
-        if (readyPlayers.indexOf(name) !== -1)
-            return true;
-        return false;
+        return readyPlayers.indexOf(name) !== -1;
     }
+
+    // таймер
+    function startTimer(endTime){
+        const updateTimer = () => {
+            const now = Date.now();
+            const timeLeft = endTime - now;
+            if (timeLeft <= 0){
+                // таймер истек
+                clearInterval(timerInterval);
+                setTimeToView('');
+            } else {
+                const minutes = Math.floor(timeLeft / 60000);
+                const seconds = Math.floor((timeLeft % 60000) / 1000).toString().padStart(2, '0'); // Преобразование секунд в двухзначный формат
+                setTimeToView(`${minutes}.${seconds}`);
+                // изменение оставшегося времени
+            }
+        }
+        updateTimer();
+        timerInterval = setInterval(updateTimer, 1000);
+    }
+
     function handleBtnReady(){
         let message = {
             event: 'ready',
@@ -200,6 +226,12 @@ export default function RoomPage(){
                 return ((<img src={imgDoctor} className='role-img' alt='doctor'/>))
         }
     }
+    const timeView = () => {
+        if (timeToView === '')
+            return (<div></div>)
+        else
+            return (<strong className='time'>{timeToView}</strong>)
+    }
     return (
         <div className='top-div' style={{backgroundImage: `url(${backgroundImage})`}}>
             <Icons
@@ -208,6 +240,7 @@ export default function RoomPage(){
             />
             <div className='cont-interface'>
                 <div className='left-panel'>
+                    {timeView()}
                     {roleView()}
                     {rolePicture()}
                 </div>

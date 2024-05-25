@@ -109,51 +109,27 @@ function checkAllReady(room){
     return room.players.length === room.readyPlayers.length;
 }
 function startGame(room){
-    let messageToSend = {
-        event:'phase',
-        phase: 'startDay',
-    }
-    broadcastMessage(messageToSend, room);
-    // Оповещение в чат
-    messageToSend = {
-        event:'messageFromServer',
-        text:`Игра началась!`,
-    }
-    room.messages.push(messageToSend);
+    broadcastMessage({event:'phase', phase: 'startDay'}, room);
+    serverMessage(`Игра началась!`, room);  // Оповещение в чат
     room.phase = 'startDay';
-    broadcastMessage(messageToSend, room);
     console.log(`Все готовы, можно начинать`);
 }
 function playerReadyHandler(room, playerName){
     room.readyPlayers.push(playerName);
-    let messageToSend = {
-        event:'ready',
-        code: 'ready',
-        name: playerName,
-    }
-    broadcastMessage(messageToSend, room);
+    broadcastMessage({event:'ready', code: 'ready', name: playerName,}, room);
     console.log(`Игрок ${playerName} готов`)
 }
 function playerNotReadyHandler(room, playerName){
     let index = room.readyPlayers.indexOf(playerName);
     room.readyPlayers.splice(index, 1);
-    let messageToSend = {
-        event:'ready',
-        code: 'notReady',
-        name: playerName,
-    }
-    broadcastMessage(messageToSend, room);
+    broadcastMessage({event:'ready', code: 'notReady', name: playerName,}, room);
     console.log(`Игрок ${playerName} отменил готовность`)
 }
 function playerConnectionHandler(message, ws){
     console.log('Подключен игрок ' + message.name);
     let currRoom = FindRoom(message.roomName);
     if (checkNameCollision(message.name, currRoom)){
-        let messageToSend = {
-            event:'response',
-            code: 'nameCollision',
-        }
-        ws.send(JSON.stringify(messageToSend));
+        ws.send(JSON.stringify({event:'response', code: 'nameCollision',}));
         ws.close;
         return false;
     }
@@ -195,8 +171,6 @@ function giveRoles(room){
     let mafiaCount = Math.floor(playersCount / 4); // Округление вниз
     let wanton = playersCount >= 6;
     let doctor = playersCount >= 8;
-    console.log(`Количество игроков: ${playersCount}`);
-    console.log(`Количество мафии: ${mafiaCount}`);
     let roles = Array(playersCount).fill('citizen');
     roles[playersCount-1] = 'sherif';
     if (wanton)
@@ -206,26 +180,42 @@ function giveRoles(room){
     for (let i = 0; i < mafiaCount; i++) {
         roles[i] = 'mafia';
     }
+    roles = roles.sort(() => Math.random() - 0.5);  // Перемешивание массива ролей
 
-    // Перемешиваем массив ролей
-    roles = roles.sort(() => Math.random() - 0.5);
-    // Присваиваем роли игрокам
+    // Присваивание ролей игрокам
     room.players.forEach((player, index) => {
         player.role = roles[index];
     });
-    sendRoles(room);
-    console.log('Роли игроков:', room.players.map(player => `${player.name}: ${player.role}`));
+    sendRoles(room); // отсылка ролей игрокам
 }
 function sendRoles(room){
     room.players.forEach((player) => {
-        let message = {
-            event: 'role',
-            role: player.role,
-        }
-        player.ws.send(JSON.stringify(message));
+        player.ws.send(JSON.stringify({event: 'role', role: player.role}));
     })
     console.log('Роли отправлены');
 }
+
+// Оповещение в чат
+const serverMessage = (text, room) => {
+    let messageToSend = {
+        event:'messageFromServer',
+        text: text
+    }
+    room.messages.push(messageToSend);
+    broadcastMessage(messageToSend, room);
+}
+function startTimerDay(room){
+    const timerDuration = 2 * 60 * 1000; // 2 минуты в миллисекундах
+    const startTime = Date.now();
+    const endTime = startTime + timerDuration;
+    broadcastMessage({event: 'startTimer', endTime: endTime}, room);
+    setTimeout(() => {
+        serverMessage('День закончился', room);
+        // startTimerNight(room);
+    }, timerDuration);
+
+}
+
 
 wsServer.on('connection', function connection(ws){
     ws.on('message', (message) => {
@@ -254,14 +244,8 @@ wsServer.on('connection', function connection(ws){
                 } else {
                     DeletePlayer(diskRoom, message.name);
 
-                    // Оповещение в чат
+                    serverMessage(`Игрок ${message.name} покинул игру`, diskRoom);
                     let messageToSend = {
-                        event:'messageFromServer',
-                        text:`Игрок ${message.name} покинул игру`
-                    }
-                    diskRoom.messages.push(messageToSend);
-                    broadcastMessage(messageToSend, diskRoom);
-                    messageToSend = {
                         event:'disconnect',
                         name: message.name,
                         players: diskRoom.players.map(player => player.name),
@@ -277,7 +261,10 @@ wsServer.on('connection', function connection(ws){
                     playerReadyHandler(room, message.name); // уведомление о готовности игрока
                     if (checkAllReady(room)){   // если все игроки готовы, начало игры
                         startGame(room);    // начало игры
-                        giveRoles(room);
+                        giveRoles(room);    // выдача ролей
+                        startTimerDay(room);    // таймер дня
+                        room.phase = 'startNight';  // переход фазы на первую ночь
+                        broadcastMessage({event: 'phase', phase: 'startNight'}, room);
                     }
                 } else if (message.code === 'notReady'){
                     let room = GetRoom(message.roomName);
@@ -299,15 +286,8 @@ wsServer.on('connection', function connection(ws){
                 if (room.players.length === 0) {
                     DeleteRoom(room.name);
                 } else{
-                    // Оповещение в чат
+                    serverMessage(`Игрок ${playerToDelete.name} покинул игру`, room);   // Оповещение в чат
                     let messageToSend = {
-                        event:'messageFromServer',
-                        text:`Игрок ${playerToDelete.name} покинул игру`
-                    }
-                    room.messages.push(messageToSend);
-                    broadcastMessage(messageToSend, room);
-
-                    messageToSend = {
                         event:'disconnect',
                         name: playerToDelete.name,
                         players: room.players.map(player => player.name),

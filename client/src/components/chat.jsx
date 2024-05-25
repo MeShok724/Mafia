@@ -43,6 +43,11 @@ export default function ChatComponent({ name, roomName, socket, messages }) {
             </div>
         ));
     };
+    const handleKeyDown = (event) => {
+        if (event.key === 'Enter') {
+            sendMessage();
+        }
+    };
 
     return (
         <div className='cont-chat'>
@@ -55,6 +60,7 @@ export default function ChatComponent({ name, roomName, socket, messages }) {
                     className='inp-chat'
                     value={messageToChat}
                     onChange={handleMessageChange}
+                    onKeyDown={handleKeyDown}
                 />
                 <button onClick={sendMessage} className='btn-chat'>Отправить сообщение</button>
             </div>
