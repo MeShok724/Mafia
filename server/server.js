@@ -108,12 +108,6 @@ function checkPlayersCount(room){
 function checkAllReady(room){
     return room.players.length === room.readyPlayers.length;
 }
-function startGame(room){
-    broadcastMessage({event:'phase', phase: 'startDay'}, room);
-    serverMessage(`Игра началась!`, room);  // Оповещение в чат
-    room.phase = 'startDay';
-    console.log(`Все готовы, можно начинать`);
-}
 function playerReadyHandler(room, playerName){
     room.readyPlayers.push(playerName);
     broadcastMessage({event:'ready', code: 'ready', name: playerName,}, room);
@@ -205,17 +199,63 @@ const serverMessage = (text, room) => {
     broadcastMessage(messageToSend, room);
 }
 function startTimerDay(room){
-    const timerDuration = 2 * 60 * 1000; // 2 минуты в миллисекундах
-    const startTime = Date.now();
-    const endTime = startTime + timerDuration;
-    broadcastMessage({event: 'startTimer', endTime: endTime}, room);
-    setTimeout(() => {
-        serverMessage('День закончился', room);
-        // startTimerNight(room);
-    }, timerDuration);
-
+    return new Promise((resolve) => {
+        broadcastMessage({event:'phase', phase: 'startDay'}, room);
+        serverMessage(`Игра началась!`, room);  // Оповещение в чат
+        room.phase = 'startDay';
+        const timerDuration = 2 * 60 * 1000; // 2 минуты в миллисекундах
+        const startTime = Date.now();
+        const endTime = startTime + timerDuration;
+        broadcastMessage({event: 'startTimer', endTime: endTime}, room);
+        setTimeout(() => {
+            serverMessage('День закончился', room);
+            resolve();
+        }, timerDuration);
+    });
+}
+function startTimerNight(room) {
+    return new Promise((resolve) => {
+        serverMessage('Наступает ночь', room);
+        room.phase = 'startNight';
+        broadcastMessage({event: 'phase', phase: 'startNight'}, room);
+        const timerDuration = 60 * 1000; // 1 минута в миллисекундах
+        const startTime = Date.now();
+        const endTime = startTime + timerDuration;
+        broadcastMessage({event: 'startTimer', endTime: endTime}, room);
+        setTimeout(() => {
+            serverMessage('Ночь закончилась', room);
+            resolve();
+        }, timerDuration);
+    });
+}
+function timerDay(room){
+    return new Promise((resolve) => {
+        // день
+        resolve();
+    });
+}
+const timerNight = (room) => {
+    return new Promise((resolve) => {
+        // ночь
+        resolve();
+    });
 }
 
+async function startGame(room){   // процесс игры
+    console.log(`Все готовы, можно начинать`);
+    giveRoles(room);    // выдача ролей
+    const gameIsEnd = (room) => {
+        return false;
+    }
+    await startTimerDay(room);    // таймер дня
+    await startTimerNight(room);
+    while (!gameIsEnd(room)){
+        await timerDay(room);    // таймер дня
+        if (gameIsEnd(room))
+            break;
+        await timerNight(room);
+    }
+}
 
 wsServer.on('connection', function connection(ws){
     ws.on('message', (message) => {
@@ -261,10 +301,6 @@ wsServer.on('connection', function connection(ws){
                     playerReadyHandler(room, message.name); // уведомление о готовности игрока
                     if (checkAllReady(room)){   // если все игроки готовы, начало игры
                         startGame(room);    // начало игры
-                        giveRoles(room);    // выдача ролей
-                        startTimerDay(room);    // таймер дня
-                        room.phase = 'startNight';  // переход фазы на первую ночь
-                        broadcastMessage({event: 'phase', phase: 'startNight'}, room);
                     }
                 } else if (message.code === 'notReady'){
                     let room = GetRoom(message.roomName);

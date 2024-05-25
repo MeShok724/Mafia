@@ -229,14 +229,20 @@ export default function RoomPage(){
     const timeView = () => {
         if (timeToView === '')
             return (<div></div>)
-        else
-            return (<strong className='time'>{timeToView}</strong>)
+        else {
+            if (phase === 'startDay' || phase === 'day')
+                return (<strong className='time'>День: {timeToView}</strong>)
+            else if (phase === 'startNight' || phase === 'night'){
+                return (<strong className='time'>Ночь: {timeToView}</strong>)
+            }
+        }
     }
     return (
         <div className='top-div' style={{backgroundImage: `url(${backgroundImage})`}}>
             <Icons
                 players={players}
                 fPlayerReady={isPlayerReady}
+                isPreparing={phase === 'preparing'}
             />
             <div className='cont-interface'>
                 <div className='left-panel'>
