@@ -104,7 +104,9 @@ export default function RoomPage(){
                     startTimer(message.endTime);
                     break;
                 case 'timeEnded':
-                    // ненужный код
+                    clearInterval(timerInterval);
+                    setTimeToView('');
+                    break;
             }
         };
 
@@ -255,6 +257,9 @@ export default function RoomPage(){
                     roomName={roomName}
                     socket={socket}
                     messages={messages}
+                    setMessages={setMessages}
+                    isMafia={role==='mafia'}
+                    phase={phase}
                 />
                 <div className='menu-buttons'>
                     <button onClick={leaveRoom} className='btn-leave'>Выйти из комнаты</button>

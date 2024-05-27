@@ -203,12 +203,14 @@ function startTimerDay(room){
         broadcastMessage({event:'phase', phase: 'startDay'}, room);
         serverMessage(`Игра началась!`, room);  // Оповещение в чат
         room.phase = 'startDay';
-        const timerDuration = 2 * 60 * 1000; // 2 минуты в миллисекундах
+        // const timerDuration = 2 * 60 * 1000; // 2 минуты в миллисекундах
+        const timerDuration = 15 * 1000;    // 15 секунд
         const startTime = Date.now();
         const endTime = startTime + timerDuration;
         broadcastMessage({event: 'startTimer', endTime: endTime}, room);
         setTimeout(() => {
             serverMessage('День закончился', room);
+            broadcastMessage({event: 'timeEnded'}, room);
             resolve();
         }, timerDuration);
     });
@@ -218,12 +220,14 @@ function startTimerNight(room) {
         serverMessage('Наступает ночь', room);
         room.phase = 'startNight';
         broadcastMessage({event: 'phase', phase: 'startNight'}, room);
-        const timerDuration = 60 * 1000; // 1 минута в миллисекундах
+        // const timerDuration = 60 * 1000; // 1 минута в миллисекундах
+        const timerDuration = 15 * 1000; // 15 sec
         const startTime = Date.now();
         const endTime = startTime + timerDuration;
         broadcastMessage({event: 'startTimer', endTime: endTime}, room);
         setTimeout(() => {
             serverMessage('Ночь закончилась', room);
+            broadcastMessage({event: 'timeEnded'}, room);
             resolve();
         }, timerDuration);
     });
@@ -248,12 +252,14 @@ async function startGame(room){   // процесс игры
         return false;
     }
     await startTimerDay(room);    // таймер дня
-    await startTimerNight(room);
+    await startTimerNight(room);    // таймер ночи
     while (!gameIsEnd(room)){
-        await timerDay(room);    // таймер дня
+        await startTimerDay(room);
+        // await timerDay(room);
         if (gameIsEnd(room))
             break;
-        await timerNight(room);
+        await startTimerNight(room);
+        // await timerNight(room);
     }
 }
 
@@ -266,6 +272,10 @@ wsServer.on('connection', function connection(ws){
                 let roomToBroadcast = rooms[0];
                 roomToBroadcast = GetRoom(message.roomName);
                 roomToBroadcast.messages.push(message);
+                if (message.forMafia){
+                    broadcastMessageToMafia(message, roomToBroadcast);
+                    break;
+                }
                 broadcastMessage(message, roomToBroadcast);
                 console.log(roomToBroadcast.messages);
                 // console.log('Сообщение '+message);
@@ -341,5 +351,12 @@ wsServer.on('connection', function connection(ws){
 function broadcastMessage(message, room){
     room.players.forEach(player => {
         player.ws.send(JSON.stringify(message));
+    })
+}
+
+function broadcastMessageToMafia(message, room){
+    room.players.forEach(player => {
+        if (player.role === 'mafia')
+            player.ws.send(JSON.stringify(message));
     })
 }

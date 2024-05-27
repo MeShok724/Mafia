@@ -2,7 +2,7 @@ import React, { useRef, useState, useEffect } from "react";
 import '../styles/chat.css'
 
 
-export default function ChatComponent({ name, roomName, socket, messages }) {
+export default function ChatComponent({ name, roomName, socket, messages, setMessages, isMafia, phase }) {
     // const [messages, setMessages] = useState([]);
     const [messageToChat, setMessageToChat] = useState('');
     const chatContainerRef = useRef(null);
@@ -20,7 +20,22 @@ export default function ChatComponent({ name, roomName, socket, messages }) {
 
     const sendMessage = () => {
         if (socket.current && socket.current.readyState === WebSocket.OPEN) {
-            // console.log('Отправляется сообщение');
+            if (isMafia && (phase === 'startNight' || phase === 'night')){
+                let message = {
+                    event: 'message',
+                    forMafia: true,
+                    text: messageToChat,
+                    name: name,
+                    roomName: roomName,
+                };
+                socket.current.send(JSON.stringify(message));
+                setMessageToChat(''); // Очистить состояние
+                return;
+            }
+            if (phase === 'startNight' || phase === 'night'){
+                setMessages((prev) => [...prev, {event: 'messageFromServer',text: 'Вы не можете отправлять сообщения ночью'}])
+                return;
+            }
             let message = {
                 event: 'message',
                 text: messageToChat,
