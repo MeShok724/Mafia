@@ -184,7 +184,12 @@ function giveRoles(room){
 }
 function sendRoles(room){
     room.players.forEach((player) => {
-        player.ws.send(JSON.stringify({event: 'role', role: player.role}));
+        if (player.role !== 'mafia')
+            player.ws.send(JSON.stringify({event: 'role', role: player.role}));
+        else {
+            let mafias = room.players.filter(p => p.role === 'mafia').map(p => p.name);
+            player.ws.send(JSON.stringify({event: 'role', role: player.role, mafias: mafias}));
+        }
     })
     console.log('Роли отправлены');
 }

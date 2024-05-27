@@ -22,11 +22,13 @@ export default function RoomPage(){
     const [messages, setMessages] = useState([]);   // сообщения
     const [players, setPlayers] = useState([]); // именя игроков
     const [readyPlayers, setReadyPlayers] = useState([]);   // готовые игроки
+    const [mafias, setMafias] = useState([]);   // мафии
     const socket = useRef(null);
     const [phase, setPhase] = useState('playersWaiting'); // текущая фаза игры
     const [role, setRole] = useState('');   // роль
     const [timeToView, setTimeToView] = useState('');
     let timerInterval; // таймер
+
 
     // для прокручивания чат вниз
     const chatContainerRef = useRef(null);
@@ -99,6 +101,8 @@ export default function RoomPage(){
                     break;
                 case 'role':
                     setRole(message.role);
+                    if (message.role === 'mafia')
+                        setMafias(message.mafias);
                     break;
                 case 'startTimer':
                     startTimer(message.endTime);
@@ -245,6 +249,8 @@ export default function RoomPage(){
                 players={players}
                 fPlayerReady={isPlayerReady}
                 isPreparing={phase === 'preparing'}
+                isMafPictures={((phase!=='preparing' && phase!=='playersWaiting') && role==='mafia')}
+                mafias={mafias}
             />
             <div className='cont-interface'>
                 <div className='left-panel'>
