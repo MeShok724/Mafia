@@ -22,7 +22,7 @@ function CreateRoom(name, user, userName){
         readyPlayers: [],
         phase: 'playersWaiting',
         addPlayer: function(ws, name) {
-            this.players.push({name: name, room:this, ws: ws, ready: false, role: ''});
+            this.players.push({name: name, room:this, ws: ws, ready: false, role: '', votes: 0});
         },
     }
     room.addPlayer(user, userName);
@@ -244,14 +244,49 @@ function startTimerNight(room) {
 }
 function timerDay(room){
     return new Promise((resolve) => {
-        // день
-        resolve();
+        serverMessage('Наступает день', room);
+        room.phase = 'day';
+        broadcastMessage({event: 'phase', phase: 'day'}, room);
+        const timerDuration = 15 * 1000; // 15 sec
+        const startTime = Date.now();
+        const endTime = startTime + timerDuration;
+        broadcastMessage({event: 'startTimer', endTime: endTime}, room);
+        setTimeout(() => {
+            serverMessage('День подходит к концу', room);
+            broadcastMessage({event: 'timeEnded'}, room);
+            resolve();
+        }, timerDuration);
     });
 }
 const timerNight = (room) => {
     return new Promise((resolve) => {
-        // ночь
-        resolve();
+        serverMessage('Наступает ночь', room);
+        room.phase = 'night';
+        broadcastMessage({event: 'phase', phase: 'night'}, room);
+        const timerDuration = 15 * 1000; // 15 sec
+        const startTime = Date.now();
+        const endTime = startTime + timerDuration;
+        broadcastMessage({event: 'startTimer', endTime: endTime}, room);
+        setTimeout(() => {
+            broadcastMessage({event: 'timeEnded'}, room);
+            resolve();
+        }, timerDuration);
+    });
+}
+const citizenVoting = (room) => {
+    return new Promise((resolve) => {
+        serverMessage('Начинается голосование', room);
+        room.phase = 'citizenVoting';
+        broadcastMessage({event: 'phase', phase: 'citizenVoting'}, room);
+        // const timerDuration = 15 * 1000; // 15 sec
+        const timerDuration = 30 * 1000; // 30 sec
+        const startTime = Date.now();
+        const endTime = startTime + timerDuration;
+        broadcastMessage({event: 'startTimer', endTime: endTime}, room);
+        setTimeout(() => {
+            broadcastMessage({event: 'timeEnded'}, room);
+            resolve();
+        }, timerDuration);
     });
 }
 
@@ -264,12 +299,11 @@ async function startGame(room){   // процесс игры
     await startTimerDay(room);    // таймер дня
     await startTimerNight(room);    // таймер ночи
     while (!gameIsEnd(room)){
-        await startTimerDay(room);
-        // await timerDay(room);
+        await timerDay(room);   // таймер дня
+        await citizenVoting(room);  // таймер голосования
         if (gameIsEnd(room))
             break;
-        await startTimerNight(room);
-        // await timerNight(room);
+        await timerNight(room); // таймер ночи
     }
 }
 
@@ -290,13 +324,14 @@ wsServer.on('connection', function connection(ws){
                 console.log(roomToBroadcast.messages);
                 // console.log('Сообщение '+message);
                 break;
-            case 'connection':
+            case 'connection':{
                 if (playerConnectionHandler(message, ws) === false) // подключение игрока и добавление в комнату
                     break;
                 let room = GetRoom(message.roomName)
                 // переход в фазу подготовки при нужном кол-ве игроков
                 checkPlayersCount(room);
                 break;
+            }
             case 'disconnect':  // отключение игрока
                 let diskRoom = GetRoom(message.roomName);
                 if (diskRoom.players.length - 1 <= 0){
@@ -327,6 +362,14 @@ wsServer.on('connection', function connection(ws){
                     playerNotReadyHandler(room, message.name); // уведомление об отмене готовности игрока
                 }
                 break;
+            case 'vote':    // игрок проголосовал
+                let room = GetRoom(message.roomName);
+                if (room.phase === "citizenVoting"){
+                    serverMessage(`Игрок ${message.name} голосует против ${message.victim}`, room);
+                    room.players[room.players.indexOf(message.victim)].votes++;
+                    broadcastMessage({event: 'vote', victim: message.victim}, room);
+                    break;
+                }
         }
     })
     ws.on('close', (code, reason) => {

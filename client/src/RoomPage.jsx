@@ -26,8 +26,10 @@ export default function RoomPage(){
     const socket = useRef(null);
     const [phase, setPhase] = useState('playersWaiting'); // текущая фаза игры
     const [role, setRole] = useState('');   // роль
-    const [timeToView, setTimeToView] = useState('');
+    const [timeToView, setTimeToView] = useState(''); // время на экране
     let timerInterval; // таймер
+    let isVoting = {value: false};
+    const [playerVotes, setPlayerVotes] = useState([]);
 
 
     // для прокручивания чат вниз
@@ -84,8 +86,13 @@ export default function RoomPage(){
                     setMessages(prev => [...prev, message]);
                     break;
                 case 'phase':
-                    setReadyPlayers([]);
+                    if (phase === 'preparing')
+                        setReadyPlayers([]);
                     setPhase(message.phase);
+                    if (message.phase === 'citizenVoting'){
+                        isVoting.value = false;
+                        setPlayerVotes(players.map(() => 0));
+                    }
                     console.log(`Фаза игры перешла в ${message.phase}`);
                     break;
                 case 'disconnect':
@@ -115,6 +122,10 @@ export default function RoomPage(){
                 case 'timeEnded':
                     clearInterval(timerInterval);
                     setTimeToView('');
+                    break;
+                case 'vote':
+                    let index = players.indexOf(message.victim);
+                    setPlayerVotes((prev) => prev.map((votes, currInd) => currInd===index?votes++:votes));
                     break;
             }
         };
@@ -243,19 +254,33 @@ export default function RoomPage(){
         else {
             if (phase === 'startDay' || phase === 'day')
                 return (<strong className='time'>День: {timeToView}</strong>)
-            else if (phase === 'startNight' || phase === 'night'){
+            else if (phase === 'startNight' || phase === 'night')
                 return (<strong className='time'>Ночь: {timeToView}</strong>)
-            }
+            else if (phase === 'citizenVoting')
+                return (<strong className='time'>Голосование: {timeToView}</strong>)
         }
+    }
+    const btnVoteClick = (key) => {
+        isVoting.value = true;
+        let message = {
+            event: 'vote',
+            name: name,
+            roomName: roomName,
+            victim: players[key],
+        }
+        socket.current.send(JSON.stringify(message));
     }
     return (
         <div className='top-div' style={{backgroundImage: `url(${backgroundImage})`}}>
             <Icons
                 players={players}
                 fPlayerReady={isPlayerReady}
-                isPreparing={phase === 'preparing'}
+                phase={phase}
                 isMafPictures={((phase!=='preparing' && phase!=='playersWaiting') && role==='mafia')}
                 mafias={mafias}
+                isVoting={isVoting}
+                playerVotes={playerVotes}
+                btnVoteClick={btnVoteClick}
             />
             <div className='cont-interface'>
                 <div className='left-panel'>
