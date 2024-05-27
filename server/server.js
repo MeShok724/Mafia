@@ -127,6 +127,11 @@ function playerConnectionHandler(message, ws){
         ws.close;
         return false;
     }
+    if (currRoom !== false && currRoom.phase !== 'preparing' && currRoom.phase !== 'playersWaiting'){
+        ws.send(JSON.stringify({event:'response', code: 'gameStarted',}));
+        ws.close;
+        return false;
+    }
     if (currRoom === false)
         currRoom = CreateRoom(message.roomName, ws, message.name)
     else

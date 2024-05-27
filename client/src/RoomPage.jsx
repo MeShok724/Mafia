@@ -57,6 +57,11 @@ export default function RoomPage(){
                         navigate(`/`);
                         break;
                     }
+                    if (message.code === 'gameStarted'){
+                        alert('В данный момент присоединиться нельзя, В комнате идет игра.');
+                        navigate(`/`);
+                        break;
+                    }
                     console.log('Вы подключены к комнате');
                     setMessages(message.messages);
                     setPlayers(message.players);
