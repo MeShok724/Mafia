@@ -31,10 +31,8 @@ export default function RoomPage(){
     const [isVoting, setIsVoting] = useState(false);   // голосовал ли пользователь
     const [playerVotes, setPlayerVotes] = useState([]); // голоса за игоков
 
-
     // для прокручивания чат вниз
     const chatContainerRef = useRef(null);
-
 
     useEffect(() => {
         socket.current = new WebSocket('ws://localhost:5000');
@@ -49,6 +47,23 @@ export default function RoomPage(){
             socket.current.send(JSON.stringify(message));
         };
 
+        socket.current.onclose = () => {
+            console.log('Подключение закрыто');
+        };
+
+        socket.current.onerror = () => {
+            console.log('Ошибка');
+        };
+
+        // Закрываем соединение при размонтировании компонента
+        return () => {
+            if (socket.current) {
+                socket.current.close();
+            }
+        };
+    }, [])
+
+    useEffect(() => {
         socket.current.onmessage = (event) => {
             let message = JSON.parse(event.data);
 
@@ -65,8 +80,14 @@ export default function RoomPage(){
                         break;
                     }
                     console.log('Вы подключены к комнате');
-                    setMessages(message.messages);
-                    setPlayers(message.players);
+                    message.messages.forEach((msg) => {
+                        setMessages(prev => [...prev, msg])
+                    })
+                    message.players.forEach((player) => {
+                        setPlayers(prev => [...prev, player])
+                    })
+
+
                     setPhase(message.phase);
                     if (message.phase === 'preparing' && message.readyPlayers !== undefined)
                         setReadyPlayers(message.readyPlayers);
@@ -75,8 +96,7 @@ export default function RoomPage(){
                     console.log('Подключен пользователь ', message.name);
                     if(message.name === name)
                         break;
-                    setPlayers(prevPlayers => [...prevPlayers, message.name]);
-                    console.log(`Игроки : ${players}`);
+                    setPlayers(prev => [...prev, message.name]);
                     break;
                 case 'message':
                     setMessages(prev => [...prev, message]);
@@ -89,6 +109,7 @@ export default function RoomPage(){
                         setReadyPlayers([]);
                     setPhase(message.phase);
                     console.log(`Фаза игры перешла в ${message.phase}`);
+                    console.log(players.length)
                     if (message.phase === 'citizenVoting'){
                         setIsVoting(false);
                         setPlayerVotes(new Array(players.length).fill(0));
@@ -132,22 +153,7 @@ export default function RoomPage(){
                     break;
             }
         };
-
-        socket.current.onclose = () => {
-            console.log('Подключение закрыто');
-        };
-
-        socket.current.onerror = () => {
-            console.log('Ошибка');
-        };
-
-        // Закрываем соединение при размонтировании компонента
-        return () => {
-            if (socket.current) {
-                socket.current.close();
-            }
-        };
-    }, []);
+    }, [players]);
 
     function leaveRoom(){
         let message = {
@@ -171,6 +177,7 @@ export default function RoomPage(){
     function isPlayerReady(name){
         return readyPlayers.indexOf(name) !== -1;
     }
+
 
     // таймер
     function startTimer(endTime){
@@ -281,6 +288,7 @@ export default function RoomPage(){
                 phase={phase}
                 isMafPictures={((phase!=='preparing' && phase!=='playersWaiting') && role==='mafia')}
                 mafias={mafias}
+
                 isVoting={isVoting}
                 setIsVoting={setIsVoting}
                 playerVotes={playerVotes}
