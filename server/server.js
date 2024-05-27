@@ -44,6 +44,13 @@ function GetPlayer (room, playerWs){
     }
     return false;
 }
+function GetPlayerWithName (room, playerName){
+    for(let i = 0; i < room.players.length; i++){
+        if (room.players[i].name === playerName)
+            return room.players[i];
+    }
+    return false;
+}
 function DeletePlayer (room, playerName){
     for(let i = 0; i < room.players.length; i++){
         if (room.players[i].name === playerName){
@@ -366,8 +373,15 @@ wsServer.on('connection', function connection(ws){
                 let room = GetRoom(message.roomName);
                 if (room.phase === "citizenVoting"){
                     serverMessage(`Игрок ${message.name} голосует против ${message.victim}`, room);
-                    room.players[room.players.indexOf(message.victim)].votes++;
+                    let player = GetPlayerWithName(room, message.victim);
+                    if (player === false){
+                        console.log(`Не удалось найти игрока с ником ${message.victim}`)
+                        break;
+                    }
+                    player.votes++;
                     broadcastMessage({event: 'vote', victim: message.victim}, room);
+                    console.log('Массив голосов: ');
+                    console.log(room.players.map(player=> player.votes));
                     break;
                 }
         }

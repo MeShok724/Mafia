@@ -20,7 +20,7 @@ export default function RoomPage(){
     const name = query.get('name');
 
     const [messages, setMessages] = useState([]);   // сообщения
-    const [players, setPlayers] = useState([]); // именя игроков
+    const [players, setPlayers] = useState([]); // имена игроков
     const [readyPlayers, setReadyPlayers] = useState([]);   // готовые игроки
     const [mafias, setMafias] = useState([]);   // мафии
     const socket = useRef(null);
@@ -28,8 +28,8 @@ export default function RoomPage(){
     const [role, setRole] = useState('');   // роль
     const [timeToView, setTimeToView] = useState(''); // время на экране
     let timerInterval; // таймер
-    let isVoting = {value: false};
-    const [playerVotes, setPlayerVotes] = useState([]);
+    const [isVoting, setIsVoting] = useState(false);   // голосовал ли пользователь
+    const [playerVotes, setPlayerVotes] = useState([]); // голоса за игоков
 
 
     // для прокручивания чат вниз
@@ -75,9 +75,8 @@ export default function RoomPage(){
                     console.log('Подключен пользователь ', message.name);
                     if(message.name === name)
                         break;
-                    setPlayers(prevPlayers => {
-                        return [...prevPlayers, message.name];
-                    });
+                    setPlayers(prevPlayers => [...prevPlayers, message.name]);
+                    console.log(`Игроки : ${players}`);
                     break;
                 case 'message':
                     setMessages(prev => [...prev, message]);
@@ -89,11 +88,12 @@ export default function RoomPage(){
                     if (phase === 'preparing')
                         setReadyPlayers([]);
                     setPhase(message.phase);
-                    if (message.phase === 'citizenVoting'){
-                        isVoting.value = false;
-                        setPlayerVotes(players.map(() => 0));
-                    }
                     console.log(`Фаза игры перешла в ${message.phase}`);
+                    if (message.phase === 'citizenVoting'){
+                        setIsVoting(false);
+                        setPlayerVotes(new Array(players.length).fill(0));
+                        console.log('Начальные голоса:', new Array(players.length).fill(0));
+                    }
                     break;
                 case 'disconnect':
                     console.log(`Пользователь ${message.name} был отключен от комнаты`);
@@ -124,8 +124,11 @@ export default function RoomPage(){
                     setTimeToView('');
                     break;
                 case 'vote':
+                    console.log(`Голос в сторону ${message.victim}`);
                     let index = players.indexOf(message.victim);
-                    setPlayerVotes((prev) => prev.map((votes, currInd) => currInd===index?votes++:votes));
+                    console.log(`Найденный индекс ${index}`);
+                    setPlayerVotes((prev) => prev.map((votes, currInd) => currInd===index?votes+1:votes));
+                    console.log(playerVotes);
                     break;
             }
         };
@@ -261,7 +264,7 @@ export default function RoomPage(){
         }
     }
     const btnVoteClick = (key) => {
-        isVoting.value = true;
+        setIsVoting(true);
         let message = {
             event: 'vote',
             name: name,
@@ -279,6 +282,7 @@ export default function RoomPage(){
                 isMafPictures={((phase!=='preparing' && phase!=='playersWaiting') && role==='mafia')}
                 mafias={mafias}
                 isVoting={isVoting}
+                setIsVoting={setIsVoting}
                 playerVotes={playerVotes}
                 btnVoteClick={btnVoteClick}
             />
