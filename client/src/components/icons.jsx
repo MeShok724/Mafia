@@ -2,7 +2,7 @@ import '../styles/icon.css'
 import citizenIcon from '../images/icon2.png'
 import mafiaIcon from '../images/mafia.jpg'
 import deadPlayer from '../images/deadPlayer.jpg'
-export default function Icons({ phase, fPlayerReady, isMafPictures, mafias, players, isVoting, playerVotes, btnVoteClick, killedPlayers, isKilled }){
+export default function Icons({ phase, role, fPlayerReady, isMafPictures, mafias, players, isPlayerVoted, playerVotes, btnVoteClick, killedPlayers, isKilled, myName }){
     const printReady = (name) => {
         if (phase === 'preparing'){
             if (fPlayerReady(name))
@@ -22,12 +22,37 @@ export default function Icons({ phase, fPlayerReady, isMafPictures, mafias, play
     }
     const printVoteBtn = (index) => {
         if (phase === 'citizenVoting'){
-            if (!isVoting && !isKilled)
+            if (!isPlayerVoted && !isKilled)
                 return <div className='cont-vote'>{playerVotes[index]}<p className='votes'></p>
                     <button className='btn-vote' onClick={()=>btnVoteClick(index)}>Голосовать</button></div>
             else return <p className='votes'>{playerVotes[index]}</p>
         }
         return(<div/>)
+    }
+    const printVotePanel = (name, index) => {
+        switch (phase){
+            case 'citizenVoting':
+                if (name !== myName){
+                    if (!isPlayerVoted && !isKilled)
+                        return <div className='cont-vote'>{playerVotes[index]}<p className='votes'></p>
+                            <button className='btn-vote' onClick={()=>btnVoteClick(index)}>Голосовать</button></div>
+                    else return <div className='cont-vote'><p className='votes'>{playerVotes[index]}</p></div>
+                } else return <div className='cont-vote'><p className='votes'>{playerVotes[index]}</p></div>
+            case 'mafiaVoting':
+                if (role === 'mafia'){
+                    if (!isPlayerVoted && !isKilled)
+                        return <div className='cont-vote'>{playerVotes[index]}<p className='votes'></p>
+                            <button className='btn-vote' onClick={()=>btnVoteClick(index)}>Голосовать</button></div>
+                    else return <div className='cont-vote'><p className='votes'>{playerVotes[index]}</p></div>
+                }
+                break;
+        }
+    }
+    const printBotPanel = (name) => {
+        if (phase === 'preparing')
+            return printReady(name);
+        if (role === 'mafia' && mafias.indexOf(name) !== -1)
+            return (<p className='role-text'>Мафия</p>)
     }
     const playerIsKilled = (name) => {
         return killedPlayers.indexOf(name) !== -1;
@@ -35,10 +60,12 @@ export default function Icons({ phase, fPlayerReady, isMafPictures, mafias, play
     const printIcons = () => {
         return players.map((name, index) => (
             <div className='icon' key={index}>
-                {printImage(name)}
+                <div className='img-and-vote'>
+                    {printImage(name)}
+                    {printVotePanel(name, index)}
+                </div>
                 <strong className='icon-name'>{name}</strong>
-                {printReady(name)}
-                {!playerIsKilled(name)?printVoteBtn(index):<div/>}
+                {printBotPanel(name)}
             </div>
         ));
     };

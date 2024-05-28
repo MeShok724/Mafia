@@ -269,14 +269,25 @@ const timerNight = (room) => {
     return new Promise((resolve) => {
         serverMessage('Наступает ночь', room);
         room.phase = 'night';
-        broadcastMessage({event: 'phase', phase: 'night'}, room);
-        const timerDuration = 15 * 1000; // 15 sec
-        const startTime = Date.now();
-        const endTime = startTime + timerDuration;
-        broadcastMessage({event: 'startTimer', endTime: endTime}, room);
+        broadcastMessage({event: 'phase', phase: 'night'}, room);   // фаза ночи
+        let timerDuration = 30 * 1000; // 2 минуты
+        let startTime = Date.now();
+        let endTime = startTime + timerDuration;
+        broadcastMessage({event: 'startTimer', endTime: endTime}, room);   // таймер у всех на 30 секунд
         setTimeout(() => {
-            broadcastMessage({event: 'timeEnded'}, room);
-            resolve();
+            broadcastMessage({event: 'timeEnded'}, room);   // время заканчивается у всех
+
+            room.phase = 'nightVoting';
+            broadcastMessage({event: 'phase', phase: 'nightVoting'}, room);
+            let timerDuration = 30 * 1000; // 30 секунд на голосование
+            let startTime = Date.now();
+            let endTime = startTime + timerDuration;
+            broadcastMessage({event: 'startTimer', endTime: endTime}, room);   // таймер у всех на 30 секунд
+            setTimeout(() => {
+                killPlayer(room);
+                resolve();  // выход из функции
+            }, timerDuration);
+
         }, timerDuration);
     });
 }
@@ -293,7 +304,7 @@ const killPlayer = (room) => {
         broadcastMessage({ event: 'playerKilled', name: playerToKill.name }, room);
         room.players.forEach((curr) => curr.votes = 0);
     } else {
-        serverMessage(`Никто не был убит, несколько игроков набрали одинаковое количество голосов`, room);
+        serverMessage(`Никто не был убит, голосование не выявило кандидата`, room);
         room.players.forEach((curr) => curr.votes = 0);
     }
 }
@@ -312,6 +323,23 @@ const citizenVoting = (room) => {
             killPlayer(room);
             resolve();
         }, timerDuration);
+    });
+}
+const mafiaVoting = (room) => {
+    return new Promise((resolve) => {
+        // serverMessage('Начинается голосование мафии', room);
+        // room.phase = 'mafiaVoting';
+        // broadcastMessage({event: 'phase', phase: 'citizenVoting'}, room);
+        // // const timerDuration = 15 * 1000; // 15 sec
+        // const timerDuration = 30 * 1000; // 30 sec
+        // const startTime = Date.now();
+        // const endTime = startTime + timerDuration;
+        // broadcastMessage({event: 'startTimer', endTime: endTime}, room);
+        // setTimeout(() => {
+        //     broadcastMessage({event: 'timeEnded'}, room);
+        //     killPlayer(room);
+        //     resolve();
+        // }, timerDuration);
     });
 }
 
@@ -338,7 +366,6 @@ async function startGame(room){   // процесс игры
             serverMessage(`Игра окончена! Мирные жители победили.`, room);
             broadcastMessage({ event: 'gameEnd', winner: 'citizens' }, room);
             broadcastMessage({ event: 'phase', phase: 'playersWaiting' }, room);
-
             return true;
         }
 
@@ -359,6 +386,7 @@ async function startGame(room){   // процесс игры
         if (gameIsEnd(room))
             break;
         await timerNight(room); // таймер ночи
+        await mafiaVoiting(room);
     }
 }
 
@@ -372,7 +400,7 @@ wsServer.on('connection', function connection(ws){
                 roomToBroadcast = GetRoom(message.roomName);
                 roomToBroadcast.messages.push(message);
                 if (message.forMafia){
-                    broadcastMessageToMafia(message, roomToBroadcast);
+                    broadcastMessageToRole(message, 'mafia', roomToBroadcast);
                     break;
                 }
                 broadcastMessage(message, roomToBroadcast);
@@ -469,9 +497,9 @@ function broadcastMessage(message, room){
     })
 }
 
-function broadcastMessageToMafia(message, room){
+function broadcastMessageToRole(message, role, room){
     room.players.forEach(player => {
-        if (player.role === 'mafia')
+        if (player.role === role)
             player.ws.send(JSON.stringify(message));
     })
 }

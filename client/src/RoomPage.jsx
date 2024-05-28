@@ -4,6 +4,7 @@ import {useNavigate} from "react-router-dom";
 import backgroundImage from "./images/room1.jpg";
 import ChatComponent from './components/chat';
 import Icons from './components/icons'
+import Modal from "./components/modal";
 import imgMafia from "./images/mafia.jpg";
 import imgCitizen from "./images/sitizen.jpg";
 import imgSherif from "./images/sherif.jpg";
@@ -28,10 +29,11 @@ export default function RoomPage(){
     const [role, setRole] = useState('');   // роль
     const [timeToView, setTimeToView] = useState(''); // время на экране
     let timerInterval; // таймер
-    const [isVoting, setIsVoting] = useState(false);   // голосовал ли пользователь
+    const [isPlayerVoted, setIsPlayerVoted] = useState(false);   // голосовал ли пользователь
     const [playerVotes, setPlayerVotes] = useState([]); // голоса за игоков
     const [killedPlayers, setKilledPlayers] = useState([]); // мертвые игроки
     const [isKilled, setIsKilled] = useState(false); // игрок мертв
+    const [gameResult, setGameResult] = useState(false); // игрок мертв
 
     // для прокручивания чат вниз
     const chatContainerRef = useRef(null);
@@ -113,7 +115,7 @@ export default function RoomPage(){
                     console.log(`Фаза игры перешла в ${message.phase}`);
                     console.log(players.length)
                     if (message.phase === 'citizenVoting'){
-                        setIsVoting(false);
+                        setIsPlayerVoted(false);
                         setPlayerVotes(new Array(players.length).fill(0));
                         console.log('Начальные голоса:', new Array(players.length).fill(0));
                     }
@@ -159,7 +161,7 @@ export default function RoomPage(){
                         setIsKilled(true);
                     break;
                 case 'gameEnd':
-
+                    setGameResult(message.winner);
             }
         };
     }, [players]);
@@ -200,8 +202,7 @@ export default function RoomPage(){
             } else {
                 const minutes = Math.floor(timeLeft / 60000);
                 const seconds = Math.floor((timeLeft % 60000) / 1000).toString().padStart(2, '0'); // Преобразование секунд в двухзначный формат
-                setTimeToView(`${minutes}.${seconds}`);
-                // изменение оставшегося времени
+                setTimeToView(`${minutes}:${seconds}`); // изменение оставшегося времени
             }
         }
         updateTimer();
@@ -269,18 +270,24 @@ export default function RoomPage(){
     }
     const timeView = () => {
         if (timeToView === '')
-            return (<div></div>)
+            return (<div/>)
         else {
-            if (phase === 'startDay' || phase === 'day')
-                return (<strong className='time'>День: {timeToView}</strong>)
-            else if (phase === 'startNight' || phase === 'night')
-                return (<strong className='time'>Ночь: {timeToView}</strong>)
-            else if (phase === 'citizenVoting')
-                return (<strong className='time'>Голосование: {timeToView}</strong>)
+            switch (phase){
+                case 'startDay':
+                case 'day':
+                    return (<strong className='time'>День: {timeToView}</strong>);
+                case 'startNight':
+                case 'night':
+                    return (<strong className='time'>Ночь: {timeToView}</strong>);
+                case 'citizenVoting':
+                    return (<strong className='time'>Голосование: {timeToView}</strong>);
+                case 'mafiaVoting':
+                    return (<strong className='time'>Голосование мафии: {timeToView}</strong>);
+            }
         }
     }
     const btnVoteClick = (key) => {
-        setIsVoting(true);
+        setIsPlayerVoted(true);
         let message = {
             event: 'vote',
             name: name,
@@ -291,18 +298,24 @@ export default function RoomPage(){
     }
     return (
         <div className='top-div' style={{backgroundImage: `url(${backgroundImage})`}}>
+            {gameResult && (
+                <Modal onClose={() => setGameResult(null)}>
+                    {gameResult === 'citizens' ? 'Мирные жители победили!' : 'Мафия победила!'}
+                </Modal>
+            )}
             <Icons
                 players={players}
                 fPlayerReady={isPlayerReady}
                 phase={phase}
+                role={role}
                 isMafPictures={((phase!=='preparing' && phase!=='playersWaiting') && role==='mafia')}
                 mafias={mafias}
-                isVoting={isVoting}
-                setIsVoting={setIsVoting}
+                isPlayerVoted={isPlayerVoted}
                 playerVotes={playerVotes}
                 btnVoteClick={btnVoteClick}
                 killedPlayers={killedPlayers}
                 isKilled={isKilled}
+                myName={name}
             />
             <div className='cont-interface'>
                 <div className='left-panel'>
