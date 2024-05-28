@@ -275,15 +275,16 @@ const timerNight = (room) => {
         let endTime = startTime + timerDuration;
         broadcastMessage({event: 'startTimer', endTime: endTime}, room);   // таймер у всех на 30 секунд
         setTimeout(() => {
-            broadcastMessage({event: 'timeEnded'}, room);   // время заканчивается у всех
+            broadcastMessage({event: 'timeEnded'}, room);
 
-            room.phase = 'nightVoting';
-            broadcastMessage({event: 'phase', phase: 'nightVoting'}, room);
+            room.phase = 'mafiaVoting';
+            broadcastMessage({event: 'phase', phase: 'mafiaVoting'}, room);
             let timerDuration = 30 * 1000; // 30 секунд на голосование
             let startTime = Date.now();
             let endTime = startTime + timerDuration;
             broadcastMessage({event: 'startTimer', endTime: endTime}, room);   // таймер у всех на 30 секунд
             setTimeout(() => {
+                broadcastMessage({event: 'timeEnded'}, room);
                 killPlayer(room);
                 resolve();  // выход из функции
             }, timerDuration);
@@ -325,23 +326,7 @@ const citizenVoting = (room) => {
         }, timerDuration);
     });
 }
-const mafiaVoting = (room) => {
-    return new Promise((resolve) => {
-        // serverMessage('Начинается голосование мафии', room);
-        // room.phase = 'mafiaVoting';
-        // broadcastMessage({event: 'phase', phase: 'citizenVoting'}, room);
-        // // const timerDuration = 15 * 1000; // 15 sec
-        // const timerDuration = 30 * 1000; // 30 sec
-        // const startTime = Date.now();
-        // const endTime = startTime + timerDuration;
-        // broadcastMessage({event: 'startTimer', endTime: endTime}, room);
-        // setTimeout(() => {
-        //     broadcastMessage({event: 'timeEnded'}, room);
-        //     killPlayer(room);
-        //     resolve();
-        // }, timerDuration);
-    });
-}
+
 
 async function startGame(room){   // процесс игры
     console.log(`Все готовы, можно начинать`);
@@ -386,7 +371,6 @@ async function startGame(room){   // процесс игры
         if (gameIsEnd(room))
             break;
         await timerNight(room); // таймер ночи
-        await mafiaVoiting(room);
     }
 }
 
@@ -447,19 +431,23 @@ wsServer.on('connection', function connection(ws){
                 break;
             case 'vote':    // игрок проголосовал
                 let room = GetRoom(message.roomName);
-                if (room.phase === "citizenVoting"){
+                if (room.phase === "citizenVoting"){    // дневное голосование
                     serverMessage(`Игрок ${message.name} голосует против ${message.victim}`, room);
                     let player = GetPlayerWithName(room, message.victim);
-                    if (player === false){
-                        console.log(`Не удалось найти игрока с ником ${message.victim}`)
-                        break;
-                    }
                     player.votes++;
                     broadcastMessage({event: 'vote', victim: message.victim}, room);
-                    console.log('Массив голосов: ');
-                    console.log(room.players.map(player=> player.votes));
                     break;
+                } else if (room.phase === "mafiaVoting") {
+                    let player = GetPlayerWithName(room, message.name);
+                    if (player.role === 'mafia'){   // голосование мафии
+                        broadcastMessageToRole({event: 'messageFromServer',
+                            text: `Игрок ${message.name} голосует против ${message.victim}`}, 'mafia', room);
+                        let victim = GetPlayerWithName(room, message.victim);
+                        victim.votes++;
+                        broadcastMessageToRole({event: 'vote', victim: message.victim}, 'mafia', room);
+                    }
                 }
+                break;
         }
     })
     ws.on('close', (code, reason) => {

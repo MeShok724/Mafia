@@ -20,15 +20,7 @@ export default function Icons({ phase, role, fPlayerReady, isMafPictures, mafias
         else
             return (<img  src={mafiaIcon} className='icon-img' alt={name}/>)
     }
-    const printVoteBtn = (index) => {
-        if (phase === 'citizenVoting'){
-            if (!isPlayerVoted && !isKilled)
-                return <div className='cont-vote'>{playerVotes[index]}<p className='votes'></p>
-                    <button className='btn-vote' onClick={()=>btnVoteClick(index)}>Голосовать</button></div>
-            else return <p className='votes'>{playerVotes[index]}</p>
-        }
-        return(<div/>)
-    }
+
     const printVotePanel = (name, index) => {
         switch (phase){
             case 'citizenVoting':

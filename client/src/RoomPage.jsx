@@ -114,10 +114,9 @@ export default function RoomPage(){
                     setPhase(message.phase);
                     console.log(`Фаза игры перешла в ${message.phase}`);
                     console.log(players.length)
-                    if (message.phase === 'citizenVoting'){
+                    if (message.phase === 'citizenVoting' || message.phase === 'mafiaVoting'){
                         setIsPlayerVoted(false);
                         setPlayerVotes(new Array(players.length).fill(0));
-                        console.log('Начальные голоса:', new Array(players.length).fill(0));
                     }
                     break;
                 case 'disconnect':
