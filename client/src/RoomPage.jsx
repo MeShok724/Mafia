@@ -161,6 +161,7 @@ export default function RoomPage(){
                     break;
                 case 'gameEnd':
                     setGameResult(message.winner);
+                    break;
             }
         };
     }, [players]);
@@ -295,10 +296,24 @@ export default function RoomPage(){
         }
         socket.current.send(JSON.stringify(message));
     }
+    const handleStay = () => {
+        setGameResult(false);
+        setMafias([]);
+        setRole('');
+        setReadyPlayers([]);
+        setKilledPlayers([]);
+        setIsPlayerVoted(false);
+        setPlayerVotes([]);
+        socket.current.send(JSON.stringify({event: 'getReadyPlayers', name: name, roomName: roomName}));
+    };
     return (
         <div className='top-div' style={{backgroundImage: `url(${backgroundImage})`}}>
             {gameResult && (
-                <Modal onClose={() => setGameResult(null)}>
+                <Modal
+                    onClose={() => setGameResult(null)}
+                    onStay={handleStay}
+                    onLeave={leaveRoom}
+                >
                     {gameResult === 'citizens' ? 'Мирные жители победили!' : 'Мафия победила!'}
                 </Modal>
             )}

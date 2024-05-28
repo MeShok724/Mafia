@@ -221,7 +221,7 @@ function startTimerDay(room){
         serverMessage(`Игра началась!`, room);  // Оповещение в чат
         room.phase = 'startDay';
         // const timerDuration = 2 * 60 * 1000; // 2 минуты в миллисекундах
-        const timerDuration = 15 * 1000;    // 15 секунд
+        const timerDuration = 5 * 1000;    // 15 секунд
         const startTime = Date.now();
         const endTime = startTime + timerDuration;
         broadcastMessage({event: 'startTimer', endTime: endTime}, room);
@@ -238,7 +238,7 @@ function startTimerNight(room) {
         room.phase = 'startNight';
         broadcastMessage({event: 'phase', phase: 'startNight'}, room);
         // const timerDuration = 60 * 1000; // 1 минута в миллисекундах
-        const timerDuration = 15 * 1000; // 15 sec
+        const timerDuration = 5 * 1000; // 15 sec
         const startTime = Date.now();
         const endTime = startTime + timerDuration;
         broadcastMessage({event: 'startTimer', endTime: endTime}, room);
@@ -254,7 +254,7 @@ function timerDay(room){
         serverMessage('Наступает день', room);
         room.phase = 'day';
         broadcastMessage({event: 'phase', phase: 'day'}, room);
-        const timerDuration = 15 * 1000; // 15 sec
+        const timerDuration = 10 * 1000; // 15 sec
         const startTime = Date.now();
         const endTime = startTime + timerDuration;
         broadcastMessage({event: 'startTimer', endTime: endTime}, room);
@@ -270,7 +270,7 @@ const timerNight = (room) => {
         serverMessage('Наступает ночь', room);
         room.phase = 'night';
         broadcastMessage({event: 'phase', phase: 'night'}, room);   // фаза ночи
-        let timerDuration = 30 * 1000; // 2 минуты
+        let timerDuration = 10 * 1000; // 20 sec
         let startTime = Date.now();
         let endTime = startTime + timerDuration;
         broadcastMessage({event: 'startTimer', endTime: endTime}, room);   // таймер у всех на 30 секунд
@@ -279,7 +279,7 @@ const timerNight = (room) => {
 
             room.phase = 'mafiaVoting';
             broadcastMessage({event: 'phase', phase: 'mafiaVoting'}, room);
-            let timerDuration = 30 * 1000; // 30 секунд на голосование
+            let timerDuration = 10 * 1000; // 30 секунд на голосование
             let startTime = Date.now();
             let endTime = startTime + timerDuration;
             broadcastMessage({event: 'startTimer', endTime: endTime}, room);   // таймер у всех на 30 секунд
@@ -315,7 +315,7 @@ const citizenVoting = (room) => {
         room.phase = 'citizenVoting';
         broadcastMessage({event: 'phase', phase: 'citizenVoting'}, room);
         // const timerDuration = 15 * 1000; // 15 sec
-        const timerDuration = 30 * 1000; // 30 sec
+        const timerDuration = 10 * 1000; // 30 sec
         const startTime = Date.now();
         const endTime = startTime + timerDuration;
         broadcastMessage({event: 'startTimer', endTime: endTime}, room);
@@ -346,18 +346,24 @@ async function startGame(room){   // процесс игры
             }
         });
 
+        const gameOverHandler = () => {
+            room.phase = 'preparing';
+            broadcastMessage({ event: 'phase', phase: 'preparing' }, room);
+            room.readyPlayers = [];
+        }
+
         // Проверка условий завершения игры
         if (mafiaCount === 0) {
             serverMessage(`Игра окончена! Мирные жители победили.`, room);
             broadcastMessage({ event: 'gameEnd', winner: 'citizens' }, room);
-            broadcastMessage({ event: 'phase', phase: 'playersWaiting' }, room);
+            gameOverHandler();
             return true;
         }
 
         if (mafiaCount >= citizenCount) {
             serverMessage(`Игра окончена! Мафия победила.`, room);
             broadcastMessage({ event: 'gameEnd', winner: 'mafia' }, room);
-            broadcastMessage({ event: 'phase', phase: 'playersWaiting' }, room);
+            gameOverHandler();
             return true;
         }
 
@@ -448,6 +454,12 @@ wsServer.on('connection', function connection(ws){
                     }
                 }
                 break;
+            case 'getReadyPlayers':{
+                let room = GetRoom(message.roomName);
+                room.readyPlayers.forEach((player) => {
+                    ws.send(JSON.stringify({event: 'ready', code: 'ready', name: player}))
+                });
+            }
         }
     })
     ws.on('close', (code, reason) => {
