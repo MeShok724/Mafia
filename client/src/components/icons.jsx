@@ -1,7 +1,8 @@
 import '../styles/icon.css'
 import citizenIcon from '../images/icon2.png'
 import mafiaIcon from '../images/mafia.jpg'
-export default function Icons({ phase, fPlayerReady, isMafPictures, mafias, players, isVoting, playerVotes, btnVoteClick }){
+import deadPlayer from '../images/deadPlayer.jpg'
+export default function Icons({ phase, fPlayerReady, isMafPictures, mafias, players, isVoting, playerVotes, btnVoteClick, killedPlayers, isKilled }){
     const printReady = (name) => {
         if (phase === 'preparing'){
             if (fPlayerReady(name))
@@ -9,9 +10,11 @@ export default function Icons({ phase, fPlayerReady, isMafPictures, mafias, play
             else
                 return (<label className='icon-not-ready'>Не готов</label>)
         } else
-            return (<div></div>)
+            return (<div/>)
     }
     const printImage = (name) => {
+        if (playerIsKilled(name))
+            return (<img  src={deadPlayer} className='icon-img' alt={name}/>)
         if (!isMafPictures || mafias.indexOf(name) === -1)
             return (<img  src={citizenIcon} className='icon-img' alt={name}/>)
         else
@@ -19,12 +22,15 @@ export default function Icons({ phase, fPlayerReady, isMafPictures, mafias, play
     }
     const printVoteBtn = (index) => {
         if (phase === 'citizenVoting'){
-            if (!isVoting)
+            if (!isVoting && !isKilled)
                 return <div className='cont-vote'>{playerVotes[index]}<p className='votes'></p>
                     <button className='btn-vote' onClick={()=>btnVoteClick(index)}>Голосовать</button></div>
             else return <p className='votes'>{playerVotes[index]}</p>
         }
-        return(<div></div>)
+        return(<div/>)
+    }
+    const playerIsKilled = (name) => {
+        return killedPlayers.indexOf(name) !== -1;
     }
     const printIcons = () => {
         return players.map((name, index) => (
@@ -32,7 +38,7 @@ export default function Icons({ phase, fPlayerReady, isMafPictures, mafias, play
                 {printImage(name)}
                 <strong className='icon-name'>{name}</strong>
                 {printReady(name)}
-                {printVoteBtn(index)}
+                {!playerIsKilled(name)?printVoteBtn(index):<div/>}
             </div>
         ));
     };

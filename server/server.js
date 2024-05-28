@@ -22,7 +22,7 @@ function CreateRoom(name, user, userName){
         readyPlayers: [],
         phase: 'playersWaiting',
         addPlayer: function(ws, name) {
-            this.players.push({name: name, room:this, ws: ws, ready: false, role: '', votes: 0});
+            this.players.push({name: name, room:this, ws: ws, ready: false, role: '', votes: 0, alive: true});
         },
     }
     room.addPlayer(user, userName);
@@ -280,6 +280,23 @@ const timerNight = (room) => {
         }, timerDuration);
     });
 }
+const killPlayer = (room) => {
+    // Находим максимальное количество голосов
+    let maxVotes = Math.max(...room.players.map(player => player.votes));
+    // Находим всех игроков с максимальным количеством голосов
+    let playersWithMaxVotes = room.players.filter(player => player.votes === maxVotes);
+    // Если только один игрок имеет максимальное количество голосов, убиваем его
+    if (playersWithMaxVotes.length === 1) {
+        let playerToKill = playersWithMaxVotes[0];
+        playerToKill.alive = false;
+        serverMessage(`Игрок ${playerToKill.name} убит`, room);
+        broadcastMessage({ event: 'playerKilled', name: playerToKill.name }, room);
+        room.players.forEach((curr) => curr.votes = 0);
+    } else {
+        serverMessage(`Никто не был убит, несколько игроков набрали одинаковое количество голосов`, room);
+        room.players.forEach((curr) => curr.votes = 0);
+    }
+}
 const citizenVoting = (room) => {
     return new Promise((resolve) => {
         serverMessage('Начинается голосование', room);
@@ -292,6 +309,7 @@ const citizenVoting = (room) => {
         broadcastMessage({event: 'startTimer', endTime: endTime}, room);
         setTimeout(() => {
             broadcastMessage({event: 'timeEnded'}, room);
+            killPlayer(room);
             resolve();
         }, timerDuration);
     });
@@ -301,8 +319,38 @@ async function startGame(room){   // процесс игры
     console.log(`Все готовы, можно начинать`);
     giveRoles(room);    // выдача ролей
     const gameIsEnd = (room) => {
+        // Подсчет количества мафиози и мирных жителей
+        let mafiaCount = 0;
+        let citizenCount = 0;
+
+        room.players.forEach(player => {
+            if (player.alive) {
+                if (player.role === 'mafia') {
+                    mafiaCount++;
+                } else {
+                    citizenCount++;
+                }
+            }
+        });
+
+        // Проверка условий завершения игры
+        if (mafiaCount === 0) {
+            serverMessage(`Игра окончена! Мирные жители победили.`, room);
+            broadcastMessage({ event: 'gameEnd', winner: 'citizens' }, room);
+            broadcastMessage({ event: 'phase', phase: 'playersWaiting' }, room);
+
+            return true;
+        }
+
+        if (mafiaCount >= citizenCount) {
+            serverMessage(`Игра окончена! Мафия победила.`, room);
+            broadcastMessage({ event: 'gameEnd', winner: 'mafia' }, room);
+            broadcastMessage({ event: 'phase', phase: 'playersWaiting' }, room);
+            return true;
+        }
+
         return false;
-    }
+    };
     await startTimerDay(room);    // таймер дня
     await startTimerNight(room);    // таймер ночи
     while (!gameIsEnd(room)){

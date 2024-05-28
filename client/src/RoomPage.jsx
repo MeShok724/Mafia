@@ -30,6 +30,8 @@ export default function RoomPage(){
     let timerInterval; // таймер
     const [isVoting, setIsVoting] = useState(false);   // голосовал ли пользователь
     const [playerVotes, setPlayerVotes] = useState([]); // голоса за игоков
+    const [killedPlayers, setKilledPlayers] = useState([]); // мертвые игроки
+    const [isKilled, setIsKilled] = useState(false); // игрок мертв
 
     // для прокручивания чат вниз
     const chatContainerRef = useRef(null);
@@ -151,6 +153,13 @@ export default function RoomPage(){
                     setPlayerVotes((prev) => prev.map((votes, currInd) => currInd===index?votes+1:votes));
                     console.log(playerVotes);
                     break;
+                case 'playerKilled':
+                    setKilledPlayers(prev=> [...prev, message.name]);
+                    if (message.name === name)
+                        setIsKilled(true);
+                    break;
+                case 'gameEnd':
+
             }
         };
     }, [players]);
@@ -288,11 +297,12 @@ export default function RoomPage(){
                 phase={phase}
                 isMafPictures={((phase!=='preparing' && phase!=='playersWaiting') && role==='mafia')}
                 mafias={mafias}
-
                 isVoting={isVoting}
                 setIsVoting={setIsVoting}
                 playerVotes={playerVotes}
                 btnVoteClick={btnVoteClick}
+                killedPlayers={killedPlayers}
+                isKilled={isKilled}
             />
             <div className='cont-interface'>
                 <div className='left-panel'>
@@ -308,6 +318,7 @@ export default function RoomPage(){
                     setMessages={setMessages}
                     isMafia={role==='mafia'}
                     phase={phase}
+                    isKilled={isKilled}
                 />
                 <div className='menu-buttons'>
                     <button onClick={leaveRoom} className='btn-leave'>Выйти из комнаты</button>

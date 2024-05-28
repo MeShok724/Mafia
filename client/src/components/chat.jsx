@@ -2,7 +2,7 @@ import React, { useRef, useState, useEffect } from "react";
 import '../styles/chat.css'
 
 
-export default function ChatComponent({ name, roomName, socket, messages, setMessages, isMafia, phase }) {
+export default function ChatComponent({ name, roomName, socket, messages, setMessages, isMafia, phase, isKilled }) {
     // const [messages, setMessages] = useState([]);
     const [messageToChat, setMessageToChat] = useState('');
     const chatContainerRef = useRef(null);
@@ -20,6 +20,10 @@ export default function ChatComponent({ name, roomName, socket, messages, setMes
 
     const sendMessage = () => {
         if (socket.current && socket.current.readyState === WebSocket.OPEN) {
+            if (isKilled){
+                setMessages((prev) => [...prev, {event: 'messageFromServer',text: 'Вы не можете писать, будучи убитым'}])
+                return;
+            }
             if (isMafia && (phase === 'startNight' || phase === 'night')){
                 let message = {
                     event: 'message',
