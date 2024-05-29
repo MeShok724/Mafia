@@ -2,7 +2,7 @@ import '../styles/icon.css'
 import citizenIcon from '../images/icon2.png'
 import mafiaIcon from '../images/mafia.jpg'
 import deadPlayer from '../images/deadPlayer.jpg'
-export default function Icons({ phase, role, fPlayerReady, isMafPictures, mafias, players, isPlayerVoted, playerVotes, btnVoteClick, killedPlayers, isKilled, myName }){
+export default function Icons({ phase, role, fPlayerReady, isMafPictures, mafias, players, isPlayerVoted, playerVotes, btnVoteClick, killedPlayers, isKilled, myName, btnWantonClick, isActive }){
     const printReady = (name) => {
         if (phase === 'preparing'){
             if (fPlayerReady(name))
@@ -22,6 +22,8 @@ export default function Icons({ phase, role, fPlayerReady, isMafPictures, mafias
     }
 
     const printVotePanel = (name, index) => {
+        if (playerIsKilled(name) || !isActive)
+            return;
         switch (phase){
             case 'citizenVoting':
                 if (name !== myName){
@@ -36,6 +38,11 @@ export default function Icons({ phase, role, fPlayerReady, isMafPictures, mafias
                         return <div className='cont-vote'>{playerVotes[index]}<p className='votes'></p>
                             <button className='btn-vote' onClick={()=>btnVoteClick(index)}>Голосовать</button></div>
                     else return <div className='cont-vote'><p className='votes'>{playerVotes[index]}</p></div>
+                }
+                break;
+            case 'night':
+                if (role === 'wanton' && name !== myName && !isPlayerVoted && !isKilled){
+                    return <div className='cont-vote'><button className='btn-wanton' onClick={()=>btnWantonClick(index)}>Охмурить</button></div>
                 }
                 break;
         }

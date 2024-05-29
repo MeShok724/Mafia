@@ -34,6 +34,7 @@ export default function RoomPage(){
     const [killedPlayers, setKilledPlayers] = useState([]); // мертвые игроки
     const [isKilled, setIsKilled] = useState(false); // игрок мертв
     const [gameResult, setGameResult] = useState(false); // игрок мертв
+    const [isActive, setIsActive] = useState(true); // игрок заблокирован
 
     // для прокручивания чат вниз
     const chatContainerRef = useRef(null);
@@ -90,8 +91,6 @@ export default function RoomPage(){
                     message.players.forEach((player) => {
                         setPlayers(prev => [...prev, player])
                     })
-
-
                     setPhase(message.phase);
                     if (message.phase === 'preparing' && message.readyPlayers !== undefined)
                         setReadyPlayers(message.readyPlayers);
@@ -113,11 +112,16 @@ export default function RoomPage(){
                         setReadyPlayers([]);
                     setPhase(message.phase);
                     console.log(`Фаза игры перешла в ${message.phase}`);
-                    console.log(players.length)
-                    if (message.phase === 'citizenVoting' || message.phase === 'mafiaVoting'){
+                    if (message.phase === 'citizenVoting' || message.phase === 'mafiaVoting' || message.phase === 'night'){
                         setIsPlayerVoted(false);
                         setPlayerVotes(new Array(players.length).fill(0));
                     }
+                    if (message.phase === 'day' && !isActive){ // разблокировка заблокированных распутницей
+                        setIsActive(true);
+                        console.log('Вы разблокированы');
+                    }
+                    if (message.phase === 'mafiaVoting' && !isActive)   // если игрок охмурен, сообщение в чат
+                        setMessages(prev => [...prev, {event: 'messageFromServer', text: 'Вас охмурила распутница, вы лишаетесь хода'}]);
                     break;
                 case 'disconnect':
                     console.log(`Пользователь ${message.name} был отключен от комнаты`);
@@ -162,10 +166,13 @@ export default function RoomPage(){
                 case 'gameEnd':
                     setGameResult(message.winner);
                     break;
+                case 'wantonBlock':
+                    setIsActive(false);
+                    console.log('Вас заблокировали');
+                    break;
             }
         };
-    }, [players]);
-
+    }, [players, isActive]);
     function leaveRoom(){
         let message = {
             event: 'disconnect',
@@ -296,7 +303,7 @@ export default function RoomPage(){
         }
         socket.current.send(JSON.stringify(message));
     }
-    const handleStay = () => {
+    const handleStay = () => {  // если игрок решил остаться в комнате
         setGameResult(false);
         setMafias([]);
         setRole('');
@@ -306,6 +313,18 @@ export default function RoomPage(){
         setPlayerVotes([]);
         socket.current.send(JSON.stringify({event: 'getReadyPlayers', name: name, roomName: roomName}));
     };
+
+    const btnWantonClick = (index) => { // ход распутницы
+        setIsPlayerVoted(true);
+        let message = {
+            event: 'wantonVote',
+            name: name,
+            roomName: roomName,
+            victim: players[index],
+        }
+        socket.current.send(JSON.stringify(message));
+    }
+
     return (
         <div className='top-div' style={{backgroundImage: `url(${backgroundImage})`}}>
             {gameResult && (
@@ -330,6 +349,8 @@ export default function RoomPage(){
                 killedPlayers={killedPlayers}
                 isKilled={isKilled}
                 myName={name}
+                btnWantonClick={btnWantonClick}
+                isActive={isActive}
             />
             <div className='cont-interface'>
                 <div className='left-panel'>

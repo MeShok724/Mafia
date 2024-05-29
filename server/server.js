@@ -278,6 +278,7 @@ const timerNight = (room) => {
             broadcastMessage({event: 'timeEnded'}, room);
 
             room.phase = 'mafiaVoting';
+            serverMessage('Наступает ночное голосование', room);
             broadcastMessage({event: 'phase', phase: 'mafiaVoting'}, room);
             let timerDuration = 10 * 1000; // 30 секунд на голосование
             let startTime = Date.now();
@@ -459,6 +460,12 @@ wsServer.on('connection', function connection(ws){
                 room.readyPlayers.forEach((player) => {
                     ws.send(JSON.stringify({event: 'ready', code: 'ready', name: player}))
                 });
+                break;
+            }
+            case 'wantonVote':{ // если ход распутницы, то сообщение о блокировке жертве
+                let room = GetRoom(message.roomName);
+                room.players.find(player => player.name === message.victim).ws.send(JSON.stringify({event: 'wantonBlock'}));
+                break;
             }
         }
     })
