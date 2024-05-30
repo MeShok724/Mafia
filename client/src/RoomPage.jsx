@@ -316,6 +316,9 @@ export default function RoomPage(){
         setIsPlayerVoted(false);
         setPlayerVotes([]);
         socket.current.send(JSON.stringify({event: 'getReadyPlayers', name: name, roomName: roomName}));
+        setDoctorPrev('');
+        setSherifChecks([]);
+        setIsKilled(false);
     };
 
     const btnWantonClick = (index) => { // ход распутницы
