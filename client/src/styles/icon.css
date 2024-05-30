@@ -45,6 +45,11 @@
     border-style: none;
     border-radius: 7px;
 }
-.btn-wanton{
+.btn-other{
+    padding: 0.4vh 0.8vh 0.4vh 0.8vh;
+    color: white;
+    background-color: #131313;
+    border-style: none;
+    border-radius: 7px;
 
 }

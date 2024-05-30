@@ -46,16 +46,16 @@ export default function Icons({ phase, role, fPlayerReady, isMafPictures, mafias
                 }
                 if (role === 'sherif' && name !== myName){
                     if (!isPlayerVoted && !isKilled)
-                        return (<div className='cont-vote'><button className='btn-sherif' onClick={()=>btnSherifClick(index)}>Проверить</button></div>)
+                        return (<div className='cont-vote'><button className='btn-other' onClick={()=>btnSherifClick(index)}>Проверить</button></div>)
                 }
                 if (role === 'doctor'){
                     if (!isPlayerVoted && !isKilled && doctorPrev !== name)
-                        return (<div className='cont-vote'><button className='btn-doctor' onClick={()=>btnDoctorClick(index)}>Вылечить</button></div>)
+                        return (<div className='cont-vote'><button className='btn-other' onClick={()=>btnDoctorClick(index)}>Вылечить</button></div>)
                 }
                 break;
             case 'night':
                 if (role === 'wanton' && name !== myName && !isPlayerVoted && !isKilled){
-                    return <div className='cont-vote'><button className='btn-wanton' onClick={()=>btnWantonClick(index)}>Охмурить</button></div>
+                    return <div className='cont-vote'><button className='btn-other' onClick={()=>btnWantonClick(index)}>Охмурить</button></div>
                 }
                 break;
         }
