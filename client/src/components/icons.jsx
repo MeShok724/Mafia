@@ -7,7 +7,7 @@ import imgCitizen from "../images/sitizen.jpg";
 import imgSherif from "../images/sherif.jpg";
 import imgWanton from "../images/wanton.jpg";
 import imgDoctor from "../images/doctor.jpg";
-export default function Icons({ phase, role, fPlayerReady, isMafPictures, mafias, players, isPlayerVoted, playerVotes, btnVoteClick, killedPlayers, isKilled, myName, btnWantonClick, isActive, btnSherifClick, sherifChecks }){
+export default function Icons({ phase, role, fPlayerReady, isMafPictures, mafias, players, isPlayerVoted, playerVotes, btnVoteClick, killedPlayers, isKilled, myName, btnWantonClick, isActive, btnSherifClick, sherifChecks, btnDoctorClick, doctorPrev }){
     const printReady = (name) => {
         if (phase === 'preparing'){
             if (fPlayerReady(name))
@@ -47,6 +47,10 @@ export default function Icons({ phase, role, fPlayerReady, isMafPictures, mafias
                 if (role === 'sherif' && name !== myName){
                     if (!isPlayerVoted && !isKilled)
                         return (<div className='cont-vote'><button className='btn-sherif' onClick={()=>btnSherifClick(index)}>Проверить</button></div>)
+                }
+                if (role === 'doctor'){
+                    if (!isPlayerVoted && !isKilled && doctorPrev !== name)
+                        return (<div className='cont-vote'><button className='btn-doctor' onClick={()=>btnDoctorClick(index)}>Вылечить</button></div>)
                 }
                 break;
             case 'night':

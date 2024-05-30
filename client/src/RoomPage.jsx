@@ -36,6 +36,7 @@ export default function RoomPage(){
     const [gameResult, setGameResult] = useState(false); // игрок мертв
     const [isActive, setIsActive] = useState(true); // игрок заблокирован
     const [sherifChecks, setSherifChecks] = useState([]); // проверки шерифа
+    const [doctorPrev, setDoctorPrev] = useState(''); // пред цель доктора
 
     // для прокручивания чат вниз
     const chatContainerRef = useRef(null);
@@ -339,6 +340,17 @@ export default function RoomPage(){
         }
         socket.current.send(JSON.stringify(message));
     }
+    const btnDoctorClick = (index) => {
+        setIsPlayerVoted(true);
+        let message = {
+            event: 'doctorVote',
+            name: name,
+            roomName: roomName,
+            victim: players[index],
+        }
+        socket.current.send(JSON.stringify(message));
+        setDoctorPrev(players[index]);
+    }
 
     return (
         <div className='top-div' style={{backgroundImage: `url(${backgroundImage})`}}>
@@ -368,6 +380,8 @@ export default function RoomPage(){
                 isActive={isActive}
                 btnSherifClick={btnSherifClick}
                 sherifChecks={sherifChecks}
+                btnDoctorClick={btnDoctorClick}
+                doctorPrev={doctorPrev}
             />
             <div className='cont-interface'>
                 <div className='left-panel'>

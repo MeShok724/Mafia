@@ -301,13 +301,21 @@ const killPlayer = (room) => {
     // Если только один игрок имеет максимальное количество голосов, убиваем его
     if (playersWithMaxVotes.length === 1) {
         let playerToKill = playersWithMaxVotes[0];
+        if (room.phase === 'mafiaVoting' && playerToKill.name === room.doctorVote){
+            serverMessage(`Никто не был убит`, room);
+            room.players.forEach((curr) => curr.votes = 0);
+            room.doctorVote = false;
+            return;
+        }
         playerToKill.alive = false;
         serverMessage(`Игрок ${playerToKill.name} убит`, room);
         broadcastMessage({ event: 'playerKilled', name: playerToKill.name }, room);
         room.players.forEach((curr) => curr.votes = 0);
+        room.doctorVote = false;
     } else {
         serverMessage(`Никто не был убит, голосование не выявило кандидата`, room);
         room.players.forEach((curr) => curr.votes = 0);
+        room.doctorVote = false;
     }
 }
 const citizenVoting = (room) => {
@@ -470,7 +478,13 @@ wsServer.on('connection', function connection(ws){
             case 'sherifVote':{ // ход шерифа, сообщение с ролью шерифу
                 const room = GetRoom(message.roomName);
                 const victimRole = room.players.find(player => player.name === message.victim).role;
-                ws.send(JSON.stringify({event: 'sherifCheck', name: message.victim, role: victimRole}))
+                ws.send(JSON.stringify({event: 'sherifCheck', name: message.victim, role: victimRole}));
+                break;
+            }
+            case 'doctorVote':{ // если ход доктора, запоминание вылеченного игрока
+                const room = GetRoom(message.roomName);
+                room.doctorVote = message.victim;
+                break;
             }
         }
     })
