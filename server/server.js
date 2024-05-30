@@ -467,6 +467,11 @@ wsServer.on('connection', function connection(ws){
                 room.players.find(player => player.name === message.victim).ws.send(JSON.stringify({event: 'wantonBlock'}));
                 break;
             }
+            case 'sherifVote':{ // ход шерифа, сообщение с ролью шерифу
+                const room = GetRoom(message.roomName);
+                const victimRole = room.players.find(player => player.name === message.victim).role;
+                ws.send(JSON.stringify({event: 'sherifCheck', name: message.victim, role: victimRole}))
+            }
         }
     })
     ws.on('close', (code, reason) => {

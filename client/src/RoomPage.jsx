@@ -35,6 +35,7 @@ export default function RoomPage(){
     const [isKilled, setIsKilled] = useState(false); // игрок мертв
     const [gameResult, setGameResult] = useState(false); // игрок мертв
     const [isActive, setIsActive] = useState(true); // игрок заблокирован
+    const [sherifChecks, setSherifChecks] = useState([]); // проверки шерифа
 
     // для прокручивания чат вниз
     const chatContainerRef = useRef(null);
@@ -169,6 +170,10 @@ export default function RoomPage(){
                 case 'wantonBlock':
                     setIsActive(false);
                     console.log('Вас заблокировали');
+                    break;
+                case 'sherifCheck':
+                    setSherifChecks(prev => [...prev, {name: message.name, role: message.role}]);
+                    console.log(`Проверен игрок ${message.name}, его роль ${message.role}`);
                     break;
             }
         };
@@ -324,6 +329,16 @@ export default function RoomPage(){
         }
         socket.current.send(JSON.stringify(message));
     }
+    const btnSherifClick = (index) => { // ход комиссара
+        setIsPlayerVoted(true);
+        let message = {
+            event: 'sherifVote',
+            name: name,
+            roomName: roomName,
+            victim: players[index],
+        }
+        socket.current.send(JSON.stringify(message));
+    }
 
     return (
         <div className='top-div' style={{backgroundImage: `url(${backgroundImage})`}}>
@@ -351,6 +366,8 @@ export default function RoomPage(){
                 myName={name}
                 btnWantonClick={btnWantonClick}
                 isActive={isActive}
+                btnSherifClick={btnSherifClick}
+                sherifChecks={sherifChecks}
             />
             <div className='cont-interface'>
                 <div className='left-panel'>
