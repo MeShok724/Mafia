@@ -4,6 +4,7 @@ const wsServer = new ws.Server({
 }, ()=>console.log('Server started on port 5000'));
 
 let rooms = [];
+
 const minPlayers = 4;
 const maxPlayers = 20;
 
@@ -220,8 +221,7 @@ function startTimerDay(room){
         broadcastMessage({event:'phase', phase: 'startDay'}, room);
         serverMessage(`Игра началась!`, room);  // Оповещение в чат
         room.phase = 'startDay';
-        // const timerDuration = 2 * 60 * 1000; // 2 минуты в миллисекундах
-        const timerDuration = 5 * 1000;    // 15 секунд
+        const timerDuration = 2 * 60 * 1000;    // 2 минуты
         const startTime = Date.now();
         const endTime = startTime + timerDuration;
         broadcastMessage({event: 'startTimer', endTime: endTime}, room);
@@ -237,8 +237,7 @@ function startTimerNight(room) {
         serverMessage('Наступает ночь', room);
         room.phase = 'startNight';
         broadcastMessage({event: 'phase', phase: 'startNight'}, room);
-        // const timerDuration = 60 * 1000; // 1 минута в миллисекундах
-        const timerDuration = 5 * 1000; // 15 sec
+        const timerDuration = 60 * 1000; // 1 минута в миллисекундах
         const startTime = Date.now();
         const endTime = startTime + timerDuration;
         broadcastMessage({event: 'startTimer', endTime: endTime}, room);
@@ -254,7 +253,7 @@ function timerDay(room){
         serverMessage('Наступает день', room);
         room.phase = 'day';
         broadcastMessage({event: 'phase', phase: 'day'}, room);
-        const timerDuration = 10 * 1000; // 15 sec
+        const timerDuration = 2 * 60 * 1000; // 15 sec
         const startTime = Date.now();
         const endTime = startTime + timerDuration;
         broadcastMessage({event: 'startTimer', endTime: endTime}, room);
@@ -270,7 +269,7 @@ const timerNight = (room) => {
         serverMessage('Наступает ночь', room);
         room.phase = 'night';
         broadcastMessage({event: 'phase', phase: 'night'}, room);   // фаза ночи
-        let timerDuration = 10 * 1000; // 20 sec
+        let timerDuration = 2 * 60 * 1000;
         let startTime = Date.now();
         let endTime = startTime + timerDuration;
         broadcastMessage({event: 'startTimer', endTime: endTime}, room);   // таймер у всех на 30 секунд
@@ -280,7 +279,7 @@ const timerNight = (room) => {
             room.phase = 'mafiaVoting';
             serverMessage('Наступает ночное голосование', room);
             broadcastMessage({event: 'phase', phase: 'mafiaVoting'}, room);
-            let timerDuration = 10 * 1000; // 30 секунд на голосование
+            let timerDuration = 30 * 1000; // 30 секунд на голосование
             let startTime = Date.now();
             let endTime = startTime + timerDuration;
             broadcastMessage({event: 'startTimer', endTime: endTime}, room);   // таймер у всех на 30 секунд

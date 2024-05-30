@@ -37,14 +37,12 @@ export default function RoomPage(){
     const [isActive, setIsActive] = useState(true); // игрок заблокирован
     const [sherifChecks, setSherifChecks] = useState([]); // проверки шерифа
     const [doctorPrev, setDoctorPrev] = useState(''); // пред цель доктора
-
-    // для прокручивания чат вниз
-    const chatContainerRef = useRef(null);
+    const chatContainerRef = useRef(null); // для прокручивания чат вниз
 
     useEffect(() => {
         socket.current = new WebSocket('ws://localhost:5000');
 
-        socket.current.onopen = () => {
+        socket.current.onopen = async () => {
             console.log('Подключение установлено');
             let message = {
                 event: 'connection',
