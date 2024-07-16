@@ -76,9 +76,7 @@ function checkNameCollision(playerName, room){
     if (room.players === undefined)
         return false;
     return room.players.some((currPlayer) => {
-        // console.log(`Сравнение ников ${currPlayer.name} и ${playerName}`);
         if (currPlayer.name === playerName) {
-            // console.log('Возвращается true');
             return true;
         }
     });
@@ -96,7 +94,6 @@ function checkPlayersCount(room){
         }
         broadcastMessage(message, room);
         room.phase = 'preparing';
-        console.log('Отправлена фаза подготовки');
         return true;
     }
     if (room.phase === 'preparing' && (room.players.length < minPlayers || room.players.length > maxPlayers)){
@@ -108,7 +105,6 @@ function checkPlayersCount(room){
         broadcastMessage(message, room);
         room.phase = 'playersWaiting';
         room.readyPlayers = [];
-        console.log('Отправлена фаза ожидания игроков');
         return true;
     }
     return false;
@@ -119,13 +115,11 @@ function checkAllReady(room){
 function playerReadyHandler(room, playerName){
     room.readyPlayers.push(playerName);
     broadcastMessage({event:'ready', code: 'ready', name: playerName,}, room);
-    console.log(`Игрок ${playerName} готов`)
 }
 function playerNotReadyHandler(room, playerName){
     let index = room.readyPlayers.indexOf(playerName);
     room.readyPlayers.splice(index, 1);
     broadcastMessage({event:'ready', code: 'notReady', name: playerName,}, room);
-    console.log(`Игрок ${playerName} отменил готовность`)
 }
 function playerConnectionHandler(message, ws){
     console.log('Подключен игрок ' + message.name);
@@ -151,7 +145,7 @@ function playerConnectionHandler(message, ws){
         text:`Игрок ${message.name} присоединился к игре`
     }
     currRoom.messages.push(messageToSend);
-    broadcastMessage(messageToSend, currRoom);
+    broadcastMessageWithout(messageToSend, message.name, currRoom);
 
     // ответ подключившемуся игроку
     messageToSend = {
@@ -204,7 +198,6 @@ function sendRoles(room){
             player.ws.send(JSON.stringify({event: 'role', role: player.role, mafias: mafias}));
         }
     })
-    console.log('Роли отправлены');
 }
 
 // Оповещение в чат
@@ -337,7 +330,6 @@ const citizenVoting = (room) => {
 
 
 async function startGame(room){   // процесс игры
-    console.log(`Все готовы, можно начинать`);
     giveRoles(room);    // выдача ролей
     const gameIsEnd = (room) => {
         // Подсчет количества мафиози и мирных жителей
@@ -391,7 +383,6 @@ async function startGame(room){   // процесс игры
 wsServer.on('connection', function connection(ws){
     ws.on('message', (message) => {
         message = JSON.parse(message);
-        // console.log(message);
         switch (message.event){
             case 'message':
                 let roomToBroadcast = rooms[0];
@@ -402,8 +393,6 @@ wsServer.on('connection', function connection(ws){
                     break;
                 }
                 broadcastMessage(message, roomToBroadcast);
-                console.log(roomToBroadcast.messages);
-                // console.log('Сообщение '+message);
                 break;
             case 'connection':{
                 if (playerConnectionHandler(message, ws) === false) // подключение игрока и добавление в комнату
@@ -488,7 +477,6 @@ wsServer.on('connection', function connection(ws){
         }
     })
     ws.on('close', (code, reason) => {
-        console.log('Соединение закрыто', { code, reason });
         // Удаляем пользователя из комнаты при разрыве соединения
         for (let i = 0; i < rooms.length; i++) {
             let room = rooms[i];
@@ -507,7 +495,6 @@ wsServer.on('connection', function connection(ws){
                         players: room.players.map(player => player.name),
                     }
                     broadcastMessage(messageToSend, room);
-                    console.log('Сообщение об удалении пользователя отправлено')
                     checkPlayersCount(room);
                 }
                 break;
@@ -525,6 +512,12 @@ function broadcastMessage(message, room){
 function broadcastMessageToRole(message, role, room){
     room.players.forEach(player => {
         if (player.role === role)
+            player.ws.send(JSON.stringify(message));
+    })
+}
+function broadcastMessageWithout(message, playerName, room){
+    room.players.forEach(player => {
+        if (player.name !== playerName)
             player.ws.send(JSON.stringify(message));
     })
 }
