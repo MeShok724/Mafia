@@ -1,5 +1,5 @@
 import './styles/Join.css';
-import backgroundImage from './images/bacground2.jpg';
+import backgroundImage from './images/background1.jpg';
 import {useState} from "react";
 import {useNavigate} from 'react-router-dom';
 
