@@ -38,6 +38,7 @@ export default function RoomPage(){
     const [sherifChecks, setSherifChecks] = useState([]); // проверки шерифа
     const [doctorPrev, setDoctorPrev] = useState(''); // пред цель доктора
     const chatContainerRef = useRef(null); // для прокручивания чат вниз
+    const [joinError, setJoinError] = useState(false); // ошибка входа
 
     useEffect(() => {
         socket.current = new WebSocket('ws://localhost:5000');
@@ -68,6 +69,7 @@ export default function RoomPage(){
         };
     }, [])
 
+    // обработка сообщений с сервера
     useEffect(() => {
         socket.current.onmessage = (event) => {
             let message = JSON.parse(event.data);
@@ -75,13 +77,11 @@ export default function RoomPage(){
             switch (message.event) {
                 case 'response':
                     if (message.code === 'nameCollision'){
-                        alert('Ваш ник уже используется другим игроком в этой комнате, используйте другой ник.');
-                        navigate(`/`);
+                        setJoinError('Name');
                         break;
                     }
                     if (message.code === 'gameStarted'){
-                        alert('В данный момент присоединиться нельзя, В комнате идет игра.');
-                        navigate(`/`);
+                        setJoinError('Game');
                         break;
                     }
                     console.log('Вы подключены к комнате');
@@ -177,6 +177,8 @@ export default function RoomPage(){
             }
         };
     }, [players, isActive]);
+
+    // выход из комнаты
     function leaveRoom(){
         let message = {
             event: 'disconnect',
@@ -200,7 +202,6 @@ export default function RoomPage(){
         return readyPlayers.indexOf(name) !== -1;
     }
 
-
     // таймер
     function startTimer(endTime){
         const updateTimer = () => {
@@ -220,6 +221,7 @@ export default function RoomPage(){
         timerInterval = setInterval(updateTimer, 1000);
     }
 
+    // игрок нажимает "готов"
     function handleBtnReady(){
         let message = {
             event: 'ready',
@@ -229,6 +231,8 @@ export default function RoomPage(){
         }
         socket.current.send(JSON.stringify(message));
     }
+
+    // игрок нажимает "отмена"
     function handleBtnNotReady(){
         let message = {
             event: 'ready',
@@ -297,6 +301,8 @@ export default function RoomPage(){
             }
         }
     }
+
+    // игрок нажимает "голосовать"
     const btnVoteClick = (key) => {
         setIsPlayerVoted(true);
         let message = {
@@ -307,7 +313,9 @@ export default function RoomPage(){
         }
         socket.current.send(JSON.stringify(message));
     }
-    const handleStay = () => {  // если игрок решил остаться в комнате
+
+    // после окончания игры игок нажал "остаться"
+    const handleStay = () => {
         setGameResult(false);
         setMafias([]);
         setRole('');
@@ -353,17 +361,44 @@ export default function RoomPage(){
         setDoctorPrev(players[index]);
     }
 
-    return (
-        <div className='top-div' style={{backgroundImage: `url(${backgroundImage})`}}>
-            {gameResult && (
+    // вывод модального окна
+    const ifModal = () => {
+        if (gameResult)
+            return (
                 <Modal
                     onClose={() => setGameResult(null)}
                     onStay={handleStay}
                     onLeave={leaveRoom}
+                    type={'gameEnd'}
                 >
                     {gameResult === 'citizens' ? 'Мирные жители победили!' : 'Мафия победила!'}
                 </Modal>
-            )}
+            )
+        else if (joinError){
+            if (joinError === 'Name')
+                return (
+                    <Modal
+                        onClose={() => {navigate(`/`);}}
+                        type={'joinError'}
+                    >
+                        {'Ваш ник уже используется другим игроком в этой комнате, используйте другой ник.'}
+                    </Modal>
+                )
+            else if (joinError === 'Game')
+                return (
+                    <Modal
+                        onClose={() => {navigate(`/`);}}
+                        type={'joinError'}
+                    >
+                        {'В данный момент присоединиться нельзя, в комнате идет игра.'}
+                    </Modal>
+                )
+        }
+    }
+
+    return (
+        <div className='top-div' style={{backgroundImage: `url(${backgroundImage})`}}>
+            {ifModal()}
             <Icons
                 players={players}
                 fPlayerReady={isPlayerReady}
