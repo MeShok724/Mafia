@@ -7,15 +7,29 @@ import {useNavigate} from 'react-router-dom';
 export default function JoinPage(props){
     const [name, nameChange] = useState('');
     const [room, roomChange] = useState('');
+    const [nameIsValid, setNameIsValid] = useState(false);
+    const [roomIsValid, setRoomIsValid] = useState(false);
     const navigate = useNavigate();
     const handleNameChange = (event) => {
-        nameChange(event.target.value)
+        nameChange(event.target.value);
+        checkName();
     }
     const handleRoomChange = (event) => {
-        roomChange(event.target.value)
+        roomChange(event.target.value);
+        checkRoom();
     }
     function ToRoomPage(){
-        navigate(`/room/${room}?name=${name}`);
+        if (checkRoom() && checkName())
+            navigate(`/room/${room}?name=${name}`);
+        else
+            alert('Некорректное имя или название комнаты')
+    }
+
+    function checkName() {
+        setNameIsValid(name.length > 0)
+    }
+    function checkRoom(){
+        setRoomIsValid(room.length > 0)
     }
 
     return (

@@ -375,24 +375,15 @@ export default function RoomPage(){
                 </Modal>
             )
         else if (joinError){
-            if (joinError === 'Name')
-                return (
-                    <Modal
-                        onClose={() => {navigate(`/`);}}
-                        type={'joinError'}
-                    >
-                        {'Ваш ник уже используется другим игроком в этой комнате, используйте другой ник.'}
-                    </Modal>
-                )
-            else if (joinError === 'Game')
-                return (
-                    <Modal
-                        onClose={() => {navigate(`/`);}}
-                        type={'joinError'}
-                    >
-                        {'В данный момент присоединиться нельзя, в комнате идет игра.'}
-                    </Modal>
-                )
+            return (
+                <Modal
+                    onClose={() => {navigate(`/`);}}
+                    type={'joinError'}
+                >
+                    {joinError === 'Name'?'Ваш ник уже используется другим игроком в этой комнате, используйте другой ник.'
+                        :'В данный момент присоединиться нельзя, в комнате идет игра.'}
+                </Modal>
+            )
         }
     }
 
