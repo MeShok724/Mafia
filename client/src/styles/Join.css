@@ -32,8 +32,13 @@
 }
 input{
     margin-top: 10px;
-    margin-bottom: 15px;
     padding: 5px;
     border-radius: 7px;
     border-style: none;
+}
+.red{
+    color: red;
+}
+.cont-inp{
+    margin-bottom: 15px;
 }

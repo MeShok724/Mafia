@@ -7,29 +7,31 @@ import {useNavigate} from 'react-router-dom';
 export default function JoinPage(props){
     const [name, nameChange] = useState('');
     const [room, roomChange] = useState('');
-    const [nameIsValid, setNameIsValid] = useState(false);
-    const [roomIsValid, setRoomIsValid] = useState(false);
+    const [nameIsValid, setNameIsValid] = useState(true);
+    const [roomIsValid, setRoomIsValid] = useState(true);
     const navigate = useNavigate();
     const handleNameChange = (event) => {
         nameChange(event.target.value);
-        checkName();
+        setNameIsValid(true);
     }
     const handleRoomChange = (event) => {
         roomChange(event.target.value);
-        checkRoom();
+        setRoomIsValid(true);
     }
     function ToRoomPage(){
-        if (checkRoom() && checkName())
+        if (checkName() && checkRoom())
             navigate(`/room/${room}?name=${name}`);
-        else
-            alert('Некорректное имя или название комнаты')
     }
 
     function checkName() {
-        setNameIsValid(name.length > 0)
+        const res = name.length > 0
+        setNameIsValid(res)
+        return res
     }
     function checkRoom(){
-        setRoomIsValid(room.length > 0)
+        const res = room.length > 0
+        setRoomIsValid(res)
+        return res
     }
 
     return (
@@ -37,11 +39,17 @@ export default function JoinPage(props){
             <h2 className="header">ПОДКЛЮЧЕНИЕ К КОМНАТЕ</h2>
             <div className="form-connect">
                 <label className="inp-label">никнейм</label>
-                <input type="text" className="inp-name"
-                       onChange={handleNameChange}/>
+                <div className='cont-inp'>
+                    <input type="text" className="inp-name"
+                           onChange={handleNameChange}/>
+                    {nameIsValid?<div/>:<p className='red'>никнейм некорректен</p>}
+                </div>
                 <label className="inp-label">комната</label>
-                <input type="text" className="inp-room"
-                       onChange={handleRoomChange}/>
+                <div className='cont-inp'>
+                    <input type="text" className="inp-room"
+                            onChange={handleRoomChange}/>
+                    {roomIsValid?<div/>:<p className='red'>комната некорректна</p>}
+                </div>
                 <button className="form-btn"
                     onClick={ToRoomPage}
                 ><b>ВОЙТИ</b></button>
