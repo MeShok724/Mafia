@@ -11,7 +11,7 @@ import imgSherif from "./images/sherif.jpg";
 import imgWanton from "./images/wanton.jpg";
 import imgDoctor from "./images/doctor.jpg";
 import './styles/RoomPage.css';
-import {getSelfVideo} from "./myLibraries/videoChat";
+import {startVideoCapture} from "./myLibraries/videoChat";
 
 export default function RoomPage(){
 
@@ -40,8 +40,23 @@ export default function RoomPage(){
     const [doctorPrev, setDoctorPrev] = useState(''); // пред цель доктора
     const chatContainerRef = useRef(null); // для прокручивания чат вниз
     const [joinError, setJoinError] = useState(false); // ошибка входа
-    let myVideoStream; // собственный поток видео
+    const [videoStream, setVideoStream] = useState(null); // поток собственного видео
 
+    // Запуск захвата видео при монтировании компонента
+    useEffect(() => {
+        const captureVideo = async () => {
+            await startVideoCapture(setVideoStream);
+        };
+        captureVideo();
+        // Очистка видеопотока при размонтировании компонента
+        return () => {
+            if (videoStream) {
+                videoStream.getTracks().forEach(track => track.stop());
+            }
+        };
+    }, []);
+
+    // Запуск web-socket соединения при монтировании компонента
     useEffect(() => {
         socket.current = new WebSocket('ws://localhost:5000');
 
@@ -53,9 +68,6 @@ export default function RoomPage(){
                 roomName: roomName,
             };
             socket.current.send(JSON.stringify(message));
-
-            // получение собственного потока видео
-            myVideoStream = getSelfVideo();
         };
 
         socket.current.onclose = () => {
@@ -414,7 +426,7 @@ export default function RoomPage(){
                 sherifChecks={sherifChecks}
                 btnDoctorClick={btnDoctorClick}
                 doctorPrev={doctorPrev}
-                myVideoStream={myVideoStream}
+                videoStream={videoStream}
             />
             <div className='cont-interface'>
                 <div className='left-panel'>

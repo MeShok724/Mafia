@@ -1,4 +1,4 @@
-import {useEffect, useRef} from "react";
+import {useEffect, useRef, useState} from "react";
 import '../styles/icon.css'
 import citizenIcon from '../images/icon2.png'
 import mafiaIcon from '../images/mafia.jpg'
@@ -8,8 +8,10 @@ import imgCitizen from "../images/sitizen.jpg";
 import imgSherif from "../images/sherif.jpg";
 import imgWanton from "../images/wanton.jpg";
 import imgDoctor from "../images/doctor.jpg";
-export default function Icons({ phase, role, fPlayerReady, isMafPictures, mafias, players, isPlayerVoted, playerVotes, btnVoteClick, killedPlayers, isKilled, myName, btnWantonClick, isActive, btnSherifClick, sherifChecks, btnDoctorClick, doctorPrev,
-                              myVideoStream}){
+import {VideoCapture} from "../myLibraries/videoChat";
+export default function Icons({ phase, role, fPlayerReady, isMafPictures, mafias, players, isPlayerVoted, playerVotes,
+                                  btnVoteClick, killedPlayers, isKilled, myName, btnWantonClick, isActive, btnSherifClick,
+                                  sherifChecks, btnDoctorClick, doctorPrev, videoStream}){
     const printReady = (name) => {
         if (phase === 'preparing'){
             if (fPlayerReady(name))
@@ -19,9 +21,9 @@ export default function Icons({ phase, role, fPlayerReady, isMafPictures, mafias
         } else
             return (<div/>)
     }
-    const printImage = (name) => {
+    const PrintImage = (name) => {
         if (name === myName)
-            return (<PrintVideo videoStream={myVideoStream} />);
+            return <VideoCapture videoStream={videoStream}/>;
         if (playerIsKilled(name))
             return (<img  src={deadPlayer} className='icon-img' alt={name}/>);
         if (!isMafPictures || mafias.indexOf(name) === -1)
@@ -29,22 +31,6 @@ export default function Icons({ phase, role, fPlayerReady, isMafPictures, mafias
         else
             return (<img  src={mafiaIcon} className='icon-img' alt={name}/>);
     }
-    const PrintVideo = ({ videoStream }) => {
-        const videoRef = useRef();
-
-        useEffect(() => {
-            if (videoRef.current && videoStream) {
-                videoRef.current.srcObject = videoStream;
-                videoRef.current.play().catch(error => {
-                    console.error("Ошибка при воспроизведении видео:", error);
-                });
-            }
-        }, [videoStream]);
-
-        return (
-            <video ref={videoRef} className='icon-img' autoPlay muted />
-        );
-    };
 
     const printVotePanel = (name, index) => {
         if (playerIsKilled(name) || !isActive)
@@ -113,7 +99,7 @@ export default function Icons({ phase, role, fPlayerReady, isMafPictures, mafias
         return players.map((name, index) => (
             <div className='icon' key={index}>
                 <div className='img-and-vote'>
-                    {printImage(name)}
+                    {PrintImage(name)}
                     {printVotePanel(name, index)}
                 </div>
                 <strong className='icon-name'>{name}</strong>

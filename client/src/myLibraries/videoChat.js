@@ -1,22 +1,29 @@
-// функция захватывает собственный поток видео и возвращает его
-export const getSelfVideo = async () => {
+import React, { useState, useEffect, useRef } from 'react';
+
+export const startVideoCapture = async (setVideoStream) => {
     try {
         const stream = await navigator.mediaDevices.getUserMedia({
-            audio: true,
             video: true,
+            audio: true,
         });
-        console.log('Собственный поток видео захвачен');
-        return stream;
+        setVideoStream(stream);
     } catch (error) {
-        console.error('Ошибка при захвате собственного видео:', error);
+        console.error('Ошибка при захвате видеопотока:', error);
     }
 };
 
-// функция добавляет к элементу видео поток
-export const addVideoStream = (video, stream) => {
-    // video.srcObject = stream;
-    // video.addEventListener("loadedmetadata", () => {
-    //     video.play();
-    //     videoGrid.append(video);
-    // });
+export const VideoCapture = ({videoStream}) => {
+    const videoRef = useRef(null);  // ссылка на поток собственного видео
+    // Назначение видеопотока элементу <video> через ref
+    useEffect(() => {
+        if (videoRef.current && videoStream) {
+            videoRef.current.srcObject = videoStream;
+        }
+    }, [videoStream]);
+
+    return (
+        <div>
+            <video ref={videoRef} autoPlay muted style={{ width: '100%', height: 'auto' }} />
+        </div>
+    );
 };
