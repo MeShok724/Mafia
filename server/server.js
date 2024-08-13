@@ -474,6 +474,12 @@ wsServer.on('connection', function connection(ws){
                 room.doctorVote = message.victim;
                 break;
             }
+            case 'sdp':{    // получение SDP пакета от игрока
+                console.log('Получен SDP пакет от ', message.name);
+                let room = GetRoom(message.roomName);
+                broadcastMessageWithout(message, message.name, room);
+                break;
+            }
         }
     })
     ws.on('close', (code, reason) => {

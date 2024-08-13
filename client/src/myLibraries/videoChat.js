@@ -27,3 +27,49 @@ export const VideoCapture = ({videoStream}) => {
         </div>
     );
 };
+
+export const createAndSendSDP = (wsServer, name, roomName) => {
+    const configuration = {
+        iceServers: [
+            {
+                urls: "stun:stun.l.google.com:19302",
+            },
+        ],
+    };
+
+    const peerConnection = new RTCPeerConnection(configuration);
+
+    // Добавление медиапотока к PeerConnection
+    navigator.mediaDevices.getUserMedia({ video: true, audio: true })
+        .then((stream) => {
+            stream.getTracks().forEach(track => {
+                peerConnection.addTrack(track, stream);
+            });
+        })
+        .catch((error) => {
+            console.error('Ошибка при получении медиапотока:', error);
+        });
+
+    // Создание SDP offer
+    peerConnection.createOffer()
+        .then((offer) => {
+            return peerConnection.setLocalDescription(offer);
+        })
+        .then(() => {
+            console.log('SDP offer:', peerConnection.localDescription.sdp);
+            sendSdpToServer(peerConnection.localDescription.sdp, wsServer, name, roomName);
+            // Здесь можно отправить SDP offer на удаленный peer
+        })
+        .catch((error) => {
+            console.error('Ошибка при создании SDP offer:', error);
+        });
+}
+const sendSdpToServer = (sdp, wsServer, name, roomName) => {
+    const message = {
+        event: 'sdp',
+        name: name,
+        roomName: roomName,
+        sdp: sdp,
+    }
+    wsServer.send(JSON.stringify(message));
+}

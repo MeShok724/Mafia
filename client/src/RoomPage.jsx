@@ -11,7 +11,7 @@ import imgSherif from "./images/sherif.jpg";
 import imgWanton from "./images/wanton.jpg";
 import imgDoctor from "./images/doctor.jpg";
 import './styles/RoomPage.css';
-import {startVideoCapture} from "./myLibraries/videoChat";
+import {startVideoCapture, createAndSendSDP} from "./myLibraries/videoChat";
 
 export default function RoomPage(){
 
@@ -102,15 +102,19 @@ export default function RoomPage(){
                         break;
                     }
                     console.log('Вы подключены к комнате');
+                    // стэк сообщений чата
                     message.messages.forEach((msg) => {
                         setMessages(prev => [...prev, msg])
                     })
+                    // установка игроков
                     message.players.forEach((player) => {
                         setPlayers(prev => [...prev, player])
                     })
-                    setPhase(message.phase);
+                    setPhase(message.phase);    // фаза игры
                     if (message.phase === 'preparing' && message.readyPlayers !== undefined)
                         setReadyPlayers(message.readyPlayers);
+                    // отправка SDP пакета
+                    createAndSendSDP(socket.current, name, roomName);
                     break;
                 case 'newPlayer':
                     console.log('Подключен пользователь ', message.name);
