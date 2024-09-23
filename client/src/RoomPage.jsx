@@ -11,7 +11,7 @@ import imgSherif from "./images/sherif.jpg";
 import imgWanton from "./images/wanton.jpg";
 import imgDoctor from "./images/doctor.jpg";
 import './styles/RoomPage.css';
-import {startVideoCapture, createAndSendSDP} from "./myLibraries/videoChat";
+import {startVideoCapture, createAndSendSDP, sdpHandler, sdpAnswerHandler} from "./myLibraries/videoChat";
 
 export default function RoomPage(){
 
@@ -40,18 +40,19 @@ export default function RoomPage(){
     const [doctorPrev, setDoctorPrev] = useState(''); // пред цель доктора
     const chatContainerRef = useRef(null); // для прокручивания чат вниз
     const [joinError, setJoinError] = useState(false); // ошибка входа
-    const [videoStream, setVideoStream] = useState(null); // поток собственного видео
+    const [selfVideoStream, setSelfVideoStream] = useState(null); // поток собственного видео
+    const [videoStreams, setVideoStreams] = useState([]); // потоки видео других игроков
 
     // Запуск захвата видео при монтировании компонента
     useEffect(() => {
         const captureVideo = async () => {
-            await startVideoCapture(setVideoStream);
+            await startVideoCapture(setSelfVideoStream);
         };
         captureVideo();
         // Очистка видеопотока при размонтировании компонента
         return () => {
-            if (videoStream) {
-                videoStream.getTracks().forEach(track => track.stop());
+            if (selfVideoStream) {
+                selfVideoStream.getTracks().forEach(track => track.stop());
             }
         };
     }, []);
@@ -195,6 +196,10 @@ export default function RoomPage(){
                     setSherifChecks(prev => [...prev, {name: message.name, role: message.role}]);
                     console.log(`Проверен игрок ${message.name}, его роль ${message.role}`);
                     break;
+                case 'sdp':
+                    sdpHandler(message.sdp, name, message.name, socket.current, roomName, setVideoStreams)
+                    break;
+                case 'sdpAnswer':
             }
         };
     }, [players, isActive]);
@@ -430,7 +435,7 @@ export default function RoomPage(){
                 sherifChecks={sherifChecks}
                 btnDoctorClick={btnDoctorClick}
                 doctorPrev={doctorPrev}
-                videoStream={videoStream}
+                videoStream={selfVideoStream}
             />
             <div className='cont-interface'>
                 <div className='left-panel'>

@@ -480,6 +480,13 @@ wsServer.on('connection', function connection(ws){
                 broadcastMessageWithout(message, message.name, room);
                 break;
             }
+            case 'sdpAnswer': {
+                console.log('SDP answer от ', message.sourceName);
+                const room = GetRoom(message.roomName);
+                const player = GetPlayerWithName(room, message.destName);
+                player.ws.send(JSON.stringify(message));
+                break;
+            }
         }
     })
     ws.on('close', (code, reason) => {
