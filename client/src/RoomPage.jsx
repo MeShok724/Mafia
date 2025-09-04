@@ -12,6 +12,7 @@ import imgWanton from "./images/wanton.jpg";
 import imgDoctor from "./images/doctor.jpg";
 import './styles/RoomPage.css';
 import {startVideoCapture, createAndSendSDP, sdpHandler, sdpAnswerHandler} from "./myLibraries/videoChat";
+import { usePeer } from "./myLibraries/peerJs";
 
 export default function RoomPage(){
 
@@ -42,6 +43,12 @@ export default function RoomPage(){
     const [joinError, setJoinError] = useState(false); // ошибка входа
     const [selfVideoStream, setSelfVideoStream] = useState(null); // поток собственного видео
     const [videoStreams, setVideoStreams] = useState([]); // потоки видео других игроков
+    const {initPeer} = usePeer()
+
+    // инициализация peer
+    useEffect(() => {
+        initPeer()
+    }, [initPeer])
 
     // Запуск захвата видео при монтировании компонента
     useEffect(() => {
@@ -200,6 +207,10 @@ export default function RoomPage(){
                     sdpHandler(message.sdp, name, message.name, socket.current, roomName, setVideoStreams)
                     break;
                 case 'sdpAnswer':
+                    break;
+                case 'candidate':
+
+                    break;
             }
         };
     }, [players, isActive]);
@@ -268,6 +279,8 @@ export default function RoomPage(){
         }
         socket.current.send(JSON.stringify(message));
     }
+
+    // кнопка "готов"
     function btnReadyView(){
         if (phase !== 'preparing')
             return (<div></div>)
@@ -277,6 +290,8 @@ export default function RoomPage(){
             return (<button onClick={handleBtnNotReady} className='btn-not-ready'>Отмена</button>)
 
     }
+
+    // отображение роли
     function roleView(){
         switch (role){
             case '':
@@ -293,6 +308,8 @@ export default function RoomPage(){
                 return (<strong className='role'>Ваша роль: Доктор</strong>)
         }
     }
+
+    // картинка роли
     function rolePicture(){
         switch (role){
             case '':
@@ -309,6 +326,8 @@ export default function RoomPage(){
                 return ((<img src={imgDoctor} className='role-img' alt='doctor'/>))
         }
     }
+
+    // отображение времени
     const timeView = () => {
         if (timeToView === '')
             return (<div/>)
@@ -375,7 +394,7 @@ export default function RoomPage(){
         }
         socket.current.send(JSON.stringify(message));
     }
-    const btnDoctorClick = (index) => {
+    const btnDoctorClick = (index) => { // ход доктора
         setIsPlayerVoted(true);
         let message = {
             event: 'doctorVote',
@@ -387,7 +406,7 @@ export default function RoomPage(){
         setDoctorPrev(players[index]);
     }
 
-    // вывод модального окна
+    // вывод модального окна с результатом игры
     const ifModal = () => {
         if (gameResult)
             return (
@@ -415,7 +434,11 @@ export default function RoomPage(){
 
     return (
         <div className='top-div' style={{backgroundImage: `url(${backgroundImage})`}}>
+            
+            {/* окно с результатами игры */}
             {ifModal()}
+
+            {/* Иконки игроков */}
             <Icons
                 players={players}
                 fPlayerReady={isPlayerReady}
@@ -437,12 +460,17 @@ export default function RoomPage(){
                 doctorPrev={doctorPrev}
                 videoStream={selfVideoStream}
             />
+
             <div className='cont-interface'>
+
+                {/* Левая информационная панель */}
                 <div className='left-panel'>
                     {timeView()}
                     {roleView()}
                     {rolePicture()}
                 </div>
+
+                {/* Чат */}
                 <ChatComponent
                     name={name}
                     roomName={roomName}
@@ -453,6 +481,8 @@ export default function RoomPage(){
                     phase={phase}
                     isKilled={isKilled}
                 />
+
+                {/* Меню */}
                 <div className='menu-buttons'>
                     <button onClick={leaveRoom} className='btn-leave'>Выйти из комнаты</button>
                     {btnReadyView()}

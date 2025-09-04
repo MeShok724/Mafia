@@ -6,7 +6,7 @@ const wsServer = new ws.Server({
 let rooms = [];
 
 const minPlayers = 4;
-const maxPlayers = 20;
+const maxPlayers = 12;
 
 function FindRoom(name){
     for(let i = 0; i < rooms.length; i++){
