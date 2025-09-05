@@ -487,6 +487,10 @@ wsServer.on('connection', function connection(ws){
                 player.ws.send(JSON.stringify(message));
                 break;
             }
+            case 'sendPeerId':{
+                console.log('Получен peerId: ', message.peerId)
+                break
+            }
         }
     })
     ws.on('close', (code, reason) => {

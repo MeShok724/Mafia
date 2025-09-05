@@ -6,10 +6,11 @@ import Peer from 'peerjs';
 export const usePeer = () => {
     const [peer, setPeer] = useState([])
     const [myId, setMyId] = useState([])
+    const [peerTable, setPeerTable] = useState([])
     const peerRef = useRef(null)
 
     // начальная инициализация и получение своего id
-    const initPeer = useCallback(() => {
+    const initPeer = useCallback((sendMyPeerId) => {
         if (peerRef.current) return;
 
         const newPeer = new Peer();
@@ -18,6 +19,8 @@ export const usePeer = () => {
 
         newPeer.on('open', function(id) {
             setMyId(id)
+            sendMyPeerId(id)
+            console.log("My peer id sended")
             console.log('My peer ID is: ' + id)
         });
 
@@ -26,6 +29,6 @@ export const usePeer = () => {
         });
     })
 
-    return { initPeer}
+    return { initPeer, myId}
 }
 

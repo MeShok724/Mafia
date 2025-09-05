@@ -43,12 +43,17 @@ export default function RoomPage(){
     const [joinError, setJoinError] = useState(false); // ошибка входа
     const [selfVideoStream, setSelfVideoStream] = useState(null); // поток собственного видео
     const [videoStreams, setVideoStreams] = useState([]); // потоки видео других игроков
-    const {initPeer} = usePeer()
+    const {initPeer, myId} = usePeer() // хук для webrtc
 
     // инициализация peer
     useEffect(() => {
-        initPeer()
+        initPeer(sendMyPeerId)
     }, [initPeer])
+
+    // отправка peerId
+    // useEffect(() => {
+    //     sendMyPeerId(myId)
+    // }, [myId])
 
     // Запуск захвата видео при монтировании компонента
     useEffect(() => {
@@ -214,6 +219,17 @@ export default function RoomPage(){
             }
         };
     }, [players, isActive]);
+
+    // отправка peerId
+    function sendMyPeerId(peerId){
+        let message = {
+            event: 'sendPeerId',
+            name: name,
+            room: roomName,
+            peerId: peerId
+        }
+        socket.current.send(JSON.stringify(message));
+    }
 
     // выход из комнаты
     function leaveRoom(){
