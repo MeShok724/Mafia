@@ -493,8 +493,7 @@ wsServer.on('connection', function connection(ws){
                 const room = GetRoom(message.roomName);
                 let position = room.players.findIndex(p => p.name === message.name)
                 room.peers[position] = message.peerId
-                if (checkPeersTable(room))
-                    sendPeersTable(room)
+                sendPeerId(room, message.name, message.peerId)
                 break;
             }
         }
@@ -544,19 +543,27 @@ function broadcastMessageWithout(message, playerName, room){
             player.ws.send(JSON.stringify(message));
     })
 }
-function checkPeersTable(room){
-    let count = room.players.length
-    if (count <= 1 || room.peers.length !== count)
-        return false
-    return room.peers.every(p => {
-        return p !== null && p !== undefined
-    })
-}
-function sendPeersTable(room){
-    console.log('Высылаем peersTable :', room.peers)
+// function checkPeersTable(room){
+//     let count = room.players.length
+//     if (count <= 1 || room.peers.length !== count)
+//         return false
+//     return room.peers.every(p => {
+//         return p !== null && p !== undefined
+//     })
+// }
+// function sendPeersTable(room){
+//     console.log('Высылаем peersTable :', room.peers)
+//     let message = {
+//         event: 'peersTable',
+//         table: room.peers
+//     }
+//     broadcastMessage(message, room)
+// }
+function sendPeerId(room, name, peerId){
     let message = {
-        event: 'peersTable',
-        table: room.peers
+        event: 'peerId',
+        name: name,
+        peerId: peerId
     }
-    broadcastMessage(message, room)
+    broadcastMessageWithout(message, name, room)
 }

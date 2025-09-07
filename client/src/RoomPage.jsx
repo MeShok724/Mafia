@@ -43,7 +43,7 @@ export default function RoomPage(){
     const [joinError, setJoinError] = useState(false); // ошибка входа
     const [selfVideoStream, setSelfVideoStream] = useState(null); // поток собственного видео
     const [videoStreams, setVideoStreams] = useState([]); // потоки видео других игроков
-    const {initPeer, myId} = usePeer() // хук для webrtc
+    const {initPeer, myId, setPeerTable, makeCall} = usePeer() // хук для webrtc
 
     // инициализация peer
     useEffect(() => {
@@ -210,11 +210,33 @@ export default function RoomPage(){
                     break;
                 case 'candidate':
                     break;
-                case 'peersTable':
-                    console.log('Получена peersTable :', message.table)
+                case 'peerId':  // добавление peerId в таблицу
+                    handlePeerId(message.name, message.peerId)
+                    break
             }
         };
     }, [players, isActive]);
+
+    function handlePeerId(peerName, peerId){
+        console.log('Получен peerId :', peerId, ' игрока ', peerName)
+        console.log(players)
+        let position = players.findIndex(p => p === peerName)
+        if (position < 0 || position >= players.length){
+            console.log('Неверно вычеслен номер игрока: ', position)
+            return
+        }
+        setPeerTable(prevArray => {
+            const newArray = [...prevArray]
+            newArray[position] = {
+                id: peerId,
+                conn: null
+            }
+            return newArray
+        })
+        let myPosition = players.findIndex(p => p.name === name)
+        if (myPosition < position)
+            makeCall(peerId, position)
+    }
 
     // отправка peerId
     function sendMyPeerId(peerId){
