@@ -7,7 +7,12 @@ export const usePeer = () => {
     const [peer, setPeer] = useState([])
     const [myId, setMyId] = useState([])
     const [peerTable, setPeerTable] = useState([])
+    const [myStream, setMyStream] = useState([])
     const peerRef = useRef(null)
+
+    const setStream = useCallback((stream) => {
+        setMyStream(stream)
+    })
 
     // начальная инициализация
     const initPeer = useCallback((sendMyPeerId) => {
@@ -31,33 +36,42 @@ export const usePeer = () => {
             console.log('Ошибка соединения: ', err)
         });
         
+        newPeer.on('call', async function(call) {
+            console.log('Получен видеозвонок от ', call.peer);
+            let myStream = await navigator.mediaDevices.getUserMedia({ 
+                video: { width: 640, height: 480 },
+                audio: true 
+            });
+            call.answer(myStream);
+            call.on('stream', function(remoteStream) {
+                addStreamToTable(remoteStream, call.peer)
+                console.log('добавил стрим звонящего')
+            })
+        }) 
 
         // прием внешних звонков
         newPeer.on('connection', function(conn) { 
-            console.log('Получен звонок от ', conn.peer)
             if (!conn) {
                 console.log('Соединение не создано');
                 return;
             }
             conn.on('open', function(){
                 if (conn.open) {
-                    console.log('Соединение открыто');
                     conn.on('data', function(data){
                         if (conn && conn.open) {
-                            console.log('Получены данные: ', data);
                             try {
                                 setPeerTable(prevArray => {
                                     const newArray = [...prevArray]
                                     newArray[data] = {
                                         id: conn.peer,
-                                        conn: conn
+                                        stream: null
                                     }
                                     return newArray
                                 })
-                                console.log('Данные занесены в таблицу')
                             } catch (error){
                                 console.log('Ошибка занесения данных в таблицу: ', error)
                             }
+                            
                         } else {
                             console.log('Соединение закрыто, данные игнорируются');
                         }
@@ -72,9 +86,38 @@ export const usePeer = () => {
         });
     })
 
+    async function callTo(peerId) {
+    // Добавляем задержку 1 секунду
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        if (!myStream || !(myStream instanceof MediaStream))
+            console.log('Не получилось получить свой медиапоток');
+        const call = peer.call(peerId, myStream)
+
+        call.on('stream', function(remoteStream) {
+                console.log('Получен удаленный видеопоток от ', peerId);
+                addStreamToTable(remoteStream, peerId)
+            });
+    }
+
+    function addStreamToTable(stream, id){
+        let index = peerTable.findIndex(p => p.id === id)
+                if (index < 0){
+                    console.log('не нашел индекс звонящего')
+                    return
+                }
+        setPeerTable(prevArray => {
+                    const newArray = [...prevArray]
+                    newArray[index] = {
+                        id: id,
+                        stream: stream
+                    }
+                    return newArray
+                })
+    }
+
     // функция звонка другому игроку
     const makeCall = useCallback ((peerId, position, myPosition) => {
-        console.log('Звоним игроку под номером ', position)
+        console.log('Соединение с игроком ', position)
         let conn = peer.connect(peerId);
         if (!conn) {
             console.error('Соединение не создано');
@@ -84,7 +127,7 @@ export const usePeer = () => {
             const newArray = [...prevArray]
             newArray[position] = {
                 id: peerId,
-                conn: conn
+                stream: null
             }
             return newArray
         })
@@ -93,16 +136,12 @@ export const usePeer = () => {
                 try {
                     conn.send(myPosition);
                     console.log('Выслали игроку нашу позицию ', myPosition);
+                    callTo(peerId)
                 } catch (error) {
                     console.error('Ошибка отправки данных: ', error);
                 }
             }
         })
-        conn.on('data', function(data) {
-	        if (conn && conn.open) {
-                console.log('Получены данные по WebRtc: ', data);
-            }
-	    });
 
         // Обработка закрытия соединения
             conn.on('close', function() {
@@ -110,6 +149,6 @@ export const usePeer = () => {
             });
     })
 
-    return { initPeer, myId, setPeerTable, makeCall}
+    return { initPeer, myId, setPeerTable, makeCall, peerTable, setStream}
 }
 

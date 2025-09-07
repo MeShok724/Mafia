@@ -8,10 +8,10 @@ import imgCitizen from "../images/sitizen.jpg";
 import imgSherif from "../images/sherif.jpg";
 import imgWanton from "../images/wanton.jpg";
 import imgDoctor from "../images/doctor.jpg";
-import {VideoCapture} from "../myLibraries/videoChat";
+import {VideoCapture} from "./videoCapture";
 export default function Icons({ phase, role, fPlayerReady, isMafPictures, mafias, players, isPlayerVoted, playerVotes,
                                   btnVoteClick, killedPlayers, isKilled, myName, btnWantonClick, isActive, btnSherifClick,
-                                  sherifChecks, btnDoctorClick, doctorPrev, videoStream}){
+                                  sherifChecks, btnDoctorClick, doctorPrev, videoStreams, myVideoStream}){
     const printReady = (name) => {
         if (phase === 'preparing'){
             if (fPlayerReady(name))
@@ -21,13 +21,16 @@ export default function Icons({ phase, role, fPlayerReady, isMafPictures, mafias
         } else
             return (<div/>)
     }
-    const PrintImage = (name) => {
-        if (name === myName)
-            return <VideoCapture videoStream={videoStream}/>;
+    const PrintImage = (name, index) => {
+        if (name === myName){
+            console.log('Вывожу свое медиа')
+            return <VideoCapture videoStream={myVideoStream}/>;
+        }
         if (playerIsKilled(name))
             return (<img  src={deadPlayer} className='icon-img' alt={name}/>);
-        if (!isMafPictures || mafias.indexOf(name) === -1)
+        if (!isMafPictures || mafias.indexOf(name) === -1){
             return (<img  src={citizenIcon} className='icon-img' alt={name}/>);
+        }
         else
             return (<img  src={mafiaIcon} className='icon-img' alt={name}/>);
     }
@@ -99,7 +102,7 @@ export default function Icons({ phase, role, fPlayerReady, isMafPictures, mafias
         return players.map((name, index) => (
             <div className='icon' key={index}>
                 <div className='img-and-vote'>
-                    {PrintImage(name)}
+                    {PrintImage(name, index)}
                     {printVotePanel(name, index)}
                 </div>
                 <strong className='icon-name'>{name}</strong>

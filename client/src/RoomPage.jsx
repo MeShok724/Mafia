@@ -11,8 +11,8 @@ import imgSherif from "./images/sherif.jpg";
 import imgWanton from "./images/wanton.jpg";
 import imgDoctor from "./images/doctor.jpg";
 import './styles/RoomPage.css';
-import {startVideoCapture, createAndSendSDP, sdpHandler, sdpAnswerHandler} from "./myLibraries/videoChat";
 import { usePeer } from "./myLibraries/peerJs";
+import { GetMyVideoStream } from "./myLibraries/video";
 
 export default function RoomPage(){
 
@@ -41,27 +41,51 @@ export default function RoomPage(){
     const [doctorPrev, setDoctorPrev] = useState(''); // пред цель доктора
     const chatContainerRef = useRef(null); // для прокручивания чат вниз
     const [joinError, setJoinError] = useState(false); // ошибка входа
-    const [selfVideoStream, setSelfVideoStream] = useState(null); // поток собственного видео
+    // const [selfVideoStream, setSelfVideoStream] = useState(null); // поток собственного видео
     const [videoStreams, setVideoStreams] = useState([]); // потоки видео других игроков
-    const {initPeer, myId, setPeerTable, makeCall} = usePeer() // хук для webrtc
+    const [myVideoStream, setMyVideoStream] = useState([]); // мое медиа
+    const {initPeer, myId, setPeerTable, makeCall, peerTable, setStream} = usePeer() // хук для webrtc
+    const [myPosition, setMyPosition] = useState()
 
     // инициализация peer
     useEffect(() => {
         initPeer(sendMyPeerId)
     }, [initPeer])
 
-    // Запуск захвата видео при монтировании компонента
     useEffect(() => {
-        const captureVideo = async () => {
-            await startVideoCapture(setSelfVideoStream);
-        };
-        captureVideo();
-        // Очистка видеопотока при размонтировании компонента
-        return () => {
-            if (selfVideoStream) {
-                selfVideoStream.getTracks().forEach(track => track.stop());
+        const newVideoStreams = peerTable.map(peer => {
+            if (peer && peer.stream) {
+                return peer.stream;
             }
-        };
+            return null;
+        });
+        setVideoStreams(newVideoStreams);
+    }, [peerTable])
+
+    // Рассчет собственной позиции при изменении списка игроков
+    useEffect(() => {
+        let myNewPosition = players.findIndex(p => p === name)
+        setMyPosition(myNewPosition)
+    }, [players])
+
+    // Запуск захвата видео при монтировании компонента
+    useEffect(() => { 
+        const captureMedia = async () => {
+            try{
+                let videoStream = await GetMyVideoStream()
+                if (videoStream){
+                    console.log('Медиа получено успешно:', videoStream);
+                    setMyVideoStream(videoStream)
+                    setStream(videoStream)
+                } else {
+                    console.log('Не удалось получить медиа');
+                    setMyVideoStream(null);
+                }
+            } catch(err){
+                console.log('Ошибка при захвате медиа: ', err)
+            }
+        }
+        captureMedia()
     }, []);
 
     // Запуск web-socket соединения при монтировании компонента
@@ -121,8 +145,6 @@ export default function RoomPage(){
                     setPhase(message.phase);    // фаза игры
                     if (message.phase === 'preparing' && message.readyPlayers !== undefined)
                         setReadyPlayers(message.readyPlayers);
-                    // отправка SDP пакета
-                    createAndSendSDP(socket.current, name, roomName);
                     break;
                 case 'newPlayer':
                     console.log('Подключен пользователь ', message.name);
@@ -233,8 +255,6 @@ export default function RoomPage(){
             }
             return newArray
         })
-        console.log('Мое имя: ', name)
-        let myPosition = players.findIndex(p => p === name)
         if (myPosition < position)
             makeCall(peerId, position, myPosition)
     }
@@ -494,7 +514,8 @@ export default function RoomPage(){
                 sherifChecks={sherifChecks}
                 btnDoctorClick={btnDoctorClick}
                 doctorPrev={doctorPrev}
-                videoStream={selfVideoStream}
+                videoStreams={videoStreams}
+                myVideoStream={myVideoStream}
             />
 
             <div className='cont-interface'>
