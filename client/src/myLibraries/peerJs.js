@@ -34,13 +34,37 @@ export const usePeer = () => {
 
         // прием внешних звонков
         newPeer.on('connection', function(conn) { 
-            console.log('Получен звонок')
+            console.log('Получен звонок от ', conn.peer)
+            if (!conn) {
+                console.log('Соединение не создано');
+                return;
+            }
             conn.on('open', function(){
-                conn.on('data', function(data){
-                    console.log('Получены данные: ', data)
-                })
+                if (conn.open) {
+                    console.log('Соединение открыто');
+                    conn.on('data', function(data){
+                        if (conn && conn.open) {
+                            console.log('Получены данные: ', data);
+                            try {
+                                setPeerTable(prevArray => {
+                                    const newArray = [...prevArray]
+                                    newArray[data] = {
+                                        id: conn.peer,
+                                        conn: conn
+                                    }
+                                    return newArray
+                                })
+                                console.log('Данные занесены в таблицу')
+                            } catch (error){
+                                console.log('Ошибка занесения данных в таблицу: ', error)
+                            }
+                        } else {
+                            console.log('Соединение закрыто, данные игнорируются');
+                        }
+                    })
+                }
             })
-            
+
             // Обработка закрытия соединения
             conn.on('close', function() {
                 console.log('Соединение закрыто');
@@ -52,6 +76,10 @@ export const usePeer = () => {
     const makeCall = useCallback ((peerId, position, myPosition) => {
         console.log('Звоним игроку под номером ', position)
         let conn = peer.connect(peerId);
+        if (!conn) {
+            console.error('Соединение не создано');
+            return;
+        }
         setPeerTable(prevArray => {
             const newArray = [...prevArray]
             newArray[position] = {
@@ -61,11 +89,19 @@ export const usePeer = () => {
             return newArray
         })
         conn.on('open', function(){
-            conn.send(myPosition)
-            console.log('Выслали игроку нашу позицию ', myPosition)
+            if (conn && conn.open) {
+                try {
+                    conn.send(myPosition);
+                    console.log('Выслали игроку нашу позицию ', myPosition);
+                } catch (error) {
+                    console.error('Ошибка отправки данных: ', error);
+                }
+            }
         })
         conn.on('data', function(data) {
-	        console.log('Получены данные по WebRtc: ', data);
+	        if (conn && conn.open) {
+                console.log('Получены данные по WebRtc: ', data);
+            }
 	    });
 
         // Обработка закрытия соединения

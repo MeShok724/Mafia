@@ -233,10 +233,12 @@ export default function RoomPage(){
             }
             return newArray
         })
-        let myPosition = players.findIndex(p => p.name === name)
+        console.log('Мое имя: ', name)
+        let myPosition = players.findIndex(p => p === name)
         if (myPosition < position)
-            makeCall(peerId, position)
+            makeCall(peerId, position, myPosition)
     }
+    
 
     // отправка peerId
     function sendMyPeerId(peerId){
