@@ -50,11 +50,6 @@ export default function RoomPage(){
         initPeer(sendMyPeerId)
     }, [initPeer])
 
-    // отправка peerId
-    // useEffect(() => {
-    //     sendMyPeerId(myId)
-    // }, [myId])
-
     // Запуск захвата видео при монтировании компонента
     useEffect(() => {
         const captureVideo = async () => {
@@ -209,13 +204,14 @@ export default function RoomPage(){
                     console.log(`Проверен игрок ${message.name}, его роль ${message.role}`);
                     break;
                 case 'sdp':
-                    sdpHandler(message.sdp, name, message.name, socket.current, roomName, setVideoStreams)
+                    // sdpHandler(message.sdp, name, message.name, socket.current, roomName, setVideoStreams)
                     break;
                 case 'sdpAnswer':
                     break;
                 case 'candidate':
-
                     break;
+                case 'peersTable':
+                    console.log('Получена peersTable :', message.table)
             }
         };
     }, [players, isActive]);
@@ -225,7 +221,7 @@ export default function RoomPage(){
         let message = {
             event: 'sendPeerId',
             name: name,
-            room: roomName,
+            roomName: roomName,
             peerId: peerId
         }
         socket.current.send(JSON.stringify(message));

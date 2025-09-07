@@ -21,6 +21,7 @@ function CreateRoom(name, user, userName){
         players: [],
         messages: [],
         readyPlayers: [],
+        peers: [],
         phase: 'playersWaiting',
         addPlayer: function(ws, name) {
             this.players.push({name: name, room:this, ws: ws, ready: false, role: '', votes: 0, alive: true});
@@ -489,7 +490,12 @@ wsServer.on('connection', function connection(ws){
             }
             case 'sendPeerId':{
                 console.log('Получен peerId: ', message.peerId)
-                break
+                const room = GetRoom(message.roomName);
+                let position = room.players.findIndex(p => p.name === message.name)
+                room.peers[position] = message.peerId
+                if (checkPeersTable(room))
+                    sendPeersTable(room)
+                break;
             }
         }
     })
@@ -537,4 +543,20 @@ function broadcastMessageWithout(message, playerName, room){
         if (player.name !== playerName)
             player.ws.send(JSON.stringify(message));
     })
+}
+function checkPeersTable(room){
+    let count = room.players.length
+    if (count <= 1 || room.peers.length !== count)
+        return false
+    return room.peers.every(p => {
+        return p !== null && p !== undefined
+    })
+}
+function sendPeersTable(room){
+    console.log('Высылаем peersTable :', room.peers)
+    let message = {
+        event: 'peersTable',
+        table: room.peers
+    }
+    broadcastMessage(message, room)
 }
