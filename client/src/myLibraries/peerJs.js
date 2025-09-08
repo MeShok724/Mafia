@@ -9,6 +9,12 @@ export const usePeer = () => {
     const [peerTable, setPeerTable] = useState([])
     const [myStream, setMyStream] = useState([])
     const peerRef = useRef(null)
+    const peerTableRef = useRef(peerTable);
+
+    useEffect(() => {
+        peerTableRef.current = peerTable;
+        console.log('peerTable changed: ', peerTableRef.current)
+    }, [peerTable]);
 
     const setStream = useCallback((stream) => {
         setMyStream(stream)
@@ -42,9 +48,13 @@ export const usePeer = () => {
                 video: { width: 640, height: 480 },
                 audio: true 
             });
+            while (!myStream || !(myStream instanceof MediaStream)){
+                console.log('Ошибка получения медиапотока, ожидание ...');
+                await new Promise(resolve => setTimeout(resolve, 1000));
+            }
             call.answer(myStream);
-            call.on('stream', function(remoteStream) {
-                addStreamToTable(remoteStream, call.peer)
+            call.on('stream', async function(remoteStream) {
+                await addStreamToTable(remoteStream, call.peer)
                 console.log('добавил стрим звонящего')
             })
         }) 
@@ -68,6 +78,7 @@ export const usePeer = () => {
                                     }
                                     return newArray
                                 })
+                                console.log('Занес в таблицу подключение')
                             } catch (error){
                                 console.log('Ошибка занесения данных в таблицу: ', error)
                             }
@@ -99,11 +110,14 @@ export const usePeer = () => {
             });
     }
 
-    function addStreamToTable(stream, id){
-        let index = peerTable.findIndex(p => p.id === id)
-                if (index < 0){
-                    console.log('не нашел индекс звонящего')
-                    return
+    async function addStreamToTable(stream, id){
+        const currentTable = peerTableRef.current;
+        let index = currentTable.findIndex(p => p?.id === id)
+        console.log('peerTable: ', currentTable)
+        console.log('id :', id)
+                while (index < 0){
+                    console.log('не нашел индекс звонящего, ожидаю')
+                    await new Promise(resolve => setTimeout(resolve, 1000));
                 }
         setPeerTable(prevArray => {
                     const newArray = [...prevArray]
@@ -113,6 +127,7 @@ export const usePeer = () => {
                     }
                     return newArray
                 })
+        console.log('Добавил стрим')        
     }
 
     // функция звонка другому игроку
@@ -131,6 +146,7 @@ export const usePeer = () => {
             }
             return newArray
         })
+        console.log('Занес в таблицу подключение')
         conn.on('open', function(){
             if (conn && conn.open) {
                 try {

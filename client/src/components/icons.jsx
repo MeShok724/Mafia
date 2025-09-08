@@ -24,7 +24,11 @@ export default function Icons({ phase, role, fPlayerReady, isMafPictures, mafias
     const PrintImage = (name, index) => {
         if (name === myName){
             console.log('Вывожу свое медиа')
-            return <VideoCapture videoStream={myVideoStream}/>;
+            return <VideoCapture videoStream={myVideoStream} isMe={true}/>;
+        }
+        if (videoStreams[index] && videoStreams[index] instanceof MediaStream){
+            console.log('Вывожу чужое медиа')
+            return <VideoCapture videoStream={videoStreams[index]} isMe={false}/>;
         }
         if (playerIsKilled(name))
             return (<img  src={deadPlayer} className='icon-img' alt={name}/>);
