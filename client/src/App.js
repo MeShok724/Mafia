@@ -1,6 +1,6 @@
 import {BrowserRouter, Route, Routes} from "react-router-dom";
-import JoinPage from "./JoinPage";
-import RoomPage from "./RoomPage";
+import JoinPage from "./pages/JoinPage";
+import RoomPage from "./pages/RoomPage";
 
 
 function App() {

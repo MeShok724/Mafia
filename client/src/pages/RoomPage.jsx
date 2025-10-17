@@ -1,18 +1,18 @@
 import {useEffect, useRef, useState} from "react";
 import {useParams} from "react-router";
 import {useNavigate} from "react-router-dom";
-import backgroundImage from "./images/room1.jpg";
-import ChatComponent from './components/chat';
-import Icons from './components/icons'
-import Modal from "./components/modal";
-import imgMafia from "./images/mafia.jpg";
-import imgCitizen from "./images/sitizen.jpg";
-import imgSherif from "./images/sherif.jpg";
-import imgWanton from "./images/wanton.jpg";
-import imgDoctor from "./images/doctor.jpg";
-import './styles/RoomPage.css';
-import { usePeer } from "./myLibraries/peerJs";
-import { GetMyVideoStream } from "./myLibraries/video";
+import backgroundImage from "../images/room1.jpg";
+import ChatComponent from '../components/chat';
+import Icons from '../components/icons'
+import Modal from "../components/modal";
+import imgMafia from "../images/mafia.jpg";
+import imgCitizen from "../images/sitizen.jpg";
+import imgSherif from "../images/sherif.jpg";
+import imgWanton from "../images/wanton.jpg";
+import imgDoctor from "../images/doctor.jpg";
+import '../styles/RoomPage.css';
+import { usePeer } from "../myLibraries/peerJs";
+import { GetMyVideoStream } from "../myLibraries/video";
 
 export default function RoomPage(){
 
@@ -41,7 +41,6 @@ export default function RoomPage(){
     const [doctorPrev, setDoctorPrev] = useState(''); // пред цель доктора
     const chatContainerRef = useRef(null); // для прокручивания чат вниз
     const [joinError, setJoinError] = useState(false); // ошибка входа
-    // const [selfVideoStream, setSelfVideoStream] = useState(null); // поток собственного видео
     const [videoStreams, setVideoStreams] = useState([]); // потоки видео других игроков
     const [myVideoStream, setMyVideoStream] = useState([]); // мое медиа
     const {initPeer, myId, setPeerTable, makeCall, peerTable, setStream} = usePeer() // хук для webrtc
