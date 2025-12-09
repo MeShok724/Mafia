@@ -1,5 +1,7 @@
-const { MIN_PLAYERS, MAX_PLAYERS } = require('./constants');
 const { broadcastMessage } = require('./messaging');
+
+const MIN_PLAYERS = 4;
+const MAX_PLAYERS = 12;
 
 function checkPlayersCount(room) {
     if (room.phase === 'playersWaiting' && room.players.length >= MIN_PLAYERS && room.players.length <= MAX_PLAYERS) {

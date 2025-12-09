@@ -4,12 +4,10 @@ import {useNavigate} from "react-router-dom";
 import backgroundImage from "../images/room1.jpg";
 import ChatComponent from '../components/chat';
 import Icons from '../components/icons'
-import Modal from "../components/modal";
-import imgMafia from "../images/mafia.jpg";
-import imgCitizen from "../images/sitizen.jpg";
-import imgSherif from "../images/sherif.jpg";
-import imgWanton from "../images/wanton.jpg";
-import imgDoctor from "../images/doctor.jpg";
+import RoleInfo from "../components/RoleInfo";
+import TimerDisplay from "../components/TimerDisplay";
+import ReadyButton from "../components/ReadyButton";
+import GameModalWrapper from "../components/GameModalWrapper";
 import '../styles/RoomPage.css';
 import { usePeer } from "../myLibraries/peerJs";
 import { GetMyVideoStream } from "../myLibraries/video";
@@ -335,73 +333,6 @@ export default function RoomPage(){
         socket.current.send(JSON.stringify(message));
     }
 
-    // кнопка "готов"
-    function btnReadyView(){
-        if (phase !== 'preparing')
-            return (<div></div>)
-        if (readyPlayers.indexOf(name) === -1)
-            return (<button onClick={handleBtnReady} className='btn-ready'>Готов</button>);
-        else
-            return (<button onClick={handleBtnNotReady} className='btn-not-ready'>Отмена</button>)
-
-    }
-
-    // отображение роли
-    function roleView(){
-        switch (role){
-            case '':
-                return (<div></div>);
-            case 'mafia':
-                return (<strong className='role'>Ваша роль: Мафия</strong>);
-            case 'citizen':
-                return (<strong className='role'>Ваша роль: Мирный житель</strong>);
-            case 'sherif':
-                return (<strong className='role'>Ваша роль: Шериф</strong>)
-            case 'wanton':
-                return (<strong className='role'>Ваша роль: Распутница</strong>)
-            case 'doctor':
-                return (<strong className='role'>Ваша роль: Доктор</strong>)
-        }
-    }
-
-    // картинка роли
-    function rolePicture(){
-        switch (role){
-            case '':
-                return (<div></div>);
-            case 'mafia':
-                return (<img src={imgMafia} className='role-img' alt='mafia'/>);
-            case 'citizen':
-                return (<img src={imgCitizen} className='role-img' alt='citizen'/>);
-            case 'sherif':
-                return ((<img src={imgSherif} className='role-img' alt='sherif'/>))
-            case 'wanton':
-                return ((<img src={imgWanton} className='role-img' alt='wanton'/>))
-            case 'doctor':
-                return ((<img src={imgDoctor} className='role-img' alt='doctor'/>))
-        }
-    }
-
-    // отображение времени
-    const timeView = () => {
-        if (timeToView === '')
-            return (<div/>)
-        else {
-            switch (phase){
-                case 'startDay':
-                case 'day':
-                    return (<strong className='time'>День: {timeToView}</strong>);
-                case 'startNight':
-                case 'night':
-                    return (<strong className='time'>Ночь: {timeToView}</strong>);
-                case 'citizenVoting':
-                    return (<strong className='time'>Голосование: {timeToView}</strong>);
-                case 'mafiaVoting':
-                    return (<strong className='time'>Голосование мафии: {timeToView}</strong>);
-            }
-        }
-    }
-
     // игрок нажимает "голосовать"
     const btnVoteClick = (key) => {
         setIsPlayerVoted(true);
@@ -462,30 +393,15 @@ export default function RoomPage(){
     }
 
     // вывод модального окна с результатом игры
-    const ifModal = () => {
-        if (gameResult)
-            return (
-                <Modal
-                    onClose={() => setGameResult(null)}
-                    onStay={handleStay}
-                    onLeave={leaveRoom}
-                    type={'gameEnd'}
-                >
-                    {gameResult === 'citizens' ? 'Мирные жители победили!' : 'Мафия победила!'}
-                </Modal>
-            )
-        else if (joinError){
-            return (
-                <Modal
-                    onClose={() => {navigate(`/`);}}
-                    type={'joinError'}
-                >
-                    {joinError === 'Name'?'Ваш ник уже используется другим игроком в этой комнате, используйте другой ник.'
-                        :'В данный момент присоединиться нельзя, в комнате идет игра.'}
-                </Modal>
-            )
-        }
-    }
+    const ifModal = () => (
+        <GameModalWrapper
+            gameResult={gameResult}
+            joinError={joinError}
+            onStay={handleStay}
+            onLeave={leaveRoom}
+            onCloseJoinError={() => navigate(`/`)}
+        />
+    );
 
     return (
         <div className='top-div' style={{backgroundImage: `url(${backgroundImage})`}}>
@@ -521,9 +437,8 @@ export default function RoomPage(){
 
                 {/* Левая информационная панель */}
                 <div className='left-panel'>
-                    {timeView()}
-                    {roleView()}
-                    {rolePicture()}
+                    <TimerDisplay phase={phase} timeToView={timeToView} />
+                    <RoleInfo role={role} />
                 </div>
 
                 {/* Чат */}
@@ -541,7 +456,13 @@ export default function RoomPage(){
                 {/* Меню */}
                 <div className='menu-buttons'>
                     <button onClick={leaveRoom} className='btn-leave'>Выйти из комнаты</button>
-                    {btnReadyView()}
+                    <ReadyButton
+                        phase={phase}
+                        readyPlayers={readyPlayers}
+                        name={name}
+                        onReady={handleBtnReady}
+                        onNotReady={handleBtnNotReady}
+                    />
                 </div>
             </div>
         </div>
