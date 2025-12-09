@@ -2,7 +2,6 @@ import '../styles/Join.css';
 import backgroundImage from '../images/background1.jpg';
 import {useState} from "react";
 import {useNavigate} from 'react-router-dom';
-import {SpeechToText} from '../services/SpeechToText'
 
 
 export default function JoinPage(props){
@@ -55,7 +54,6 @@ export default function JoinPage(props){
                     onClick={ToRoomPage}
                 ><b>ВОЙТИ</b></button>
             </div>
-            <SpeechToText/>
         </div>
     );
 }
