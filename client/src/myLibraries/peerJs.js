@@ -100,11 +100,17 @@ export const usePeer = () => {
     async function callTo(peerId) {
     // Добавляем задержку 1 секунду
         await new Promise(resolve => setTimeout(resolve, 1000));
-        if (!myStream || !(myStream instanceof MediaStream))
+        if (!myStream || !(myStream instanceof MediaStream)) {
             console.log('Не получилось получить свой медиапоток');
+            return;
+        }
         const call = peer.call(peerId, myStream)
 
         call.on('stream', function(remoteStream) {
+                if (!remoteStream || !(remoteStream instanceof MediaStream)) {
+                    console.log('Не получилось получить медиапоток собеседника');
+                    return;
+                }
                 console.log('Получен удаленный видеопоток от ', peerId);
                 addStreamToTable(remoteStream, peerId)
             });
