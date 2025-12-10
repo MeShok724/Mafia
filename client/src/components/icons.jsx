@@ -9,6 +9,9 @@ import imgSherif from "../images/sherif.jpg";
 import imgWanton from "../images/wanton.jpg";
 import imgDoctor from "../images/doctor.jpg";
 import {VideoCapture} from "./videoCapture";
+
+const phasesNight = ['night', 'startNight', 'mafiaVoting'];
+
 export default function Icons({ phase, role, fPlayerReady, isMafPictures, mafias, players, isPlayerVoted, playerVotes,
                                   btnVoteClick, killedPlayers, isKilled, myName, btnWantonClick, isActive, btnSherifClick,
                                   sherifChecks, btnDoctorClick, doctorPrev, videoStreams, myVideoStream}){
@@ -22,21 +25,21 @@ export default function Icons({ phase, role, fPlayerReady, isMafPictures, mafias
             return (<div/>)
     }
     const PrintImage = (name, index) => {
-        if (name === myName){
-            console.log('Вывожу свое медиа')
-            return <VideoCapture videoStream={myVideoStream} isMe={true}/>;
-        }
-        if (videoStreams[index] && videoStreams[index] instanceof MediaStream){
-            console.log('Вывожу чужое медиа')
-            return <VideoCapture videoStream={videoStreams[index]} isMe={false}/>;
-        }
+        const isMafia = mafias.indexOf(name) !== -1;
+        const showVideo = !phasesNight.includes(phase) || isMafia;
+
         if (playerIsKilled(name))
             return (<img  src={deadPlayer} className='icon-img' alt={name}/>);
-        if (!isMafPictures || mafias.indexOf(name) === -1){
+        if (showVideo && name === myName) {
+            return <VideoCapture videoStream={myVideoStream} isMe={true}/>;
+        }
+        if (showVideo && videoStreams[index] && videoStreams[index] instanceof MediaStream) {
+            return <VideoCapture videoStream={videoStreams[index]} isMe={false}/>;
+        }
+        if (!isMafPictures || !isMafia){
             return (<img  src={citizenIcon} className='icon-img' alt={name}/>);
         }
-        else
-            return (<img  src={mafiaIcon} className='icon-img' alt={name}/>);
+        return (<img  src={mafiaIcon} className='icon-img' alt={name}/>);
     }
 
     const printVotePanel = (name, index) => {

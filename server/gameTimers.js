@@ -5,7 +5,7 @@ function startTimerDay(room) {
         broadcastMessage({ event: 'phase', phase: 'startDay' }, room);
         serverMessage('Игра началась!', room);
         room.phase = 'startDay';
-        const timerDuration = 2 * 60 * 1000;
+        const timerDuration = 0.3 * 60 * 1000;
         const startTime = Date.now();
         const endTime = startTime + timerDuration;
         broadcastMessage({ event: 'startTimer', endTime }, room);
@@ -22,7 +22,7 @@ function startTimerNight(room) {
         serverMessage('Наступает ночь', room);
         room.phase = 'startNight';
         broadcastMessage({ event: 'phase', phase: 'startNight' }, room);
-        const timerDuration = 60 * 1000;
+        const timerDuration = 0.3 * 60 * 1000;
         const startTime = Date.now();
         const endTime = startTime + timerDuration;
         broadcastMessage({ event: 'startTimer', endTime }, room);
@@ -39,7 +39,7 @@ function timerDay(room) {
         serverMessage('Наступает день', room);
         room.phase = 'day';
         broadcastMessage({ event: 'phase', phase: 'day' }, room);
-        const timerDuration = 2 * 60 * 1000;
+        const timerDuration = 0.3 * 60 * 1000;
         const startTime = Date.now();
         const endTime = startTime + timerDuration;
         broadcastMessage({ event: 'startTimer', endTime }, room);
@@ -86,7 +86,7 @@ function timerNight(room) {
         serverMessage('Наступает ночь', room);
         room.phase = 'night';
         broadcastMessage({ event: 'phase', phase: 'night' }, room);
-        const timerDuration = 2 * 60 * 1000;
+        const timerDuration = 0.3 * 60 * 1000;
         const startTime = Date.now();
         const endTime = startTime + timerDuration;
         broadcastMessage({ event: 'startTimer', endTime }, room);
